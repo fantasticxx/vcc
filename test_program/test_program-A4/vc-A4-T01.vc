@@ -1,0 +1,54 @@
+/*
+/**************************************************
+ *                                                *
+ *   Program: vc-A4-T01.vc                        *
+ *                                                *
+ *   Vanilla-C compiler test program              *
+ *   Purpose: Testing Vanilla-C compiler of A1    *
+ *   Test Items:                                  *
+ *     (1) Program unit                           *
+ *     (2) Control structures                     *
+ *     (3) Comments                               *
+ *   Date: 2016/06/18                             *
+ **************************************************
+*/
+main()
+{
+ /************************************************/
+
+  // ----------------------------------------------
+  //   DECLARATION: SYMBOLIC CONSTANTS & VARIABLES
+  // ----------------------------------------------
+
+    const  a1 = "Fibonacci(", MAX = 25;
+    const  Zero = 0; One = 1;
+    int	M, N, K0, K1, K2;
+
+  // ----------------------------------------------
+  //   PROCESSING STATEMENTS
+  // ----------------------------------------------
+
+    print( "Please enter N: "); read(N);
+    M  = N;
+    K0 = Zero;
+    K1 = One;
+    println("// ****");
+    if (N <= MAX) { 
+      if (N < 2) K2 = N;
+        else  while(M > 0) {
+                 M = M-1;
+                 K2= K0+K1; K0 = K1, K1 = K2;
+              }
+      print( a1 );  print(N);    print( ")" );
+      print(' = '); println(K2);
+    } else {
+      print("!! ");
+      print(N);
+      println("is not a valid value!"); 
+    }
+    println("// ****");
+
+ /************************************************/
+
+ // --- END OF PROGRAM ----------------------------
+}

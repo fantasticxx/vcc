@@ -1,0 +1,36 @@
+/*
+/**************************************************
+ *                                                *
+ *   Program: vc-A3-T05.vc                        *
+ *                                                *
+ *   Vanilla-C compiler test program T05          *
+ *   Purpose: Testing Vanilla-C compiler of A3    *
+ *   Test Items:                                  *
+ *     (1) Basic program unit                     *
+ *     (2) Assignment & Expression                *
+ *     (3) I/O Statements - read/print/println    *
+ *   Note: This is a template.                    *
+ *   Date: 2016/06/18                             *
+ **************************************************
+*/
+main()
+{
+  // ----------------------------------------------
+  //   SYMBOLIC CONSTANTS AND VARIABLES
+  // ----------------------------------------------
+     const    M1 = "Hello, ";
+     string   N;
+     int      n1, n2, ans;
+  // ----------------------------------------------
+  //   PROCESSING STATEMENTS
+  // ----------------------------------------------
+  print(M1); println("program execution starts.");
+  println("Pleade enter the value of n1:");
+  read(n1);
+  println("Pleade enter the value of n2:");
+  read(n2);
+  ans = (n1+n2)*(n1-n2)+1;
+  print("The answer is"); println(ans);
+  println("Good-bye.");
+  // --- END OF PROGRAM ---------------------------  
+}

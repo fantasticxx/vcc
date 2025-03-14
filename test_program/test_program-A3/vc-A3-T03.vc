@@ -1,0 +1,36 @@
+/*
+/**************************************************
+ *                                                *
+ *   Program: vc-A3-T03.vc                        *
+ *                                                *
+ *   Vanilla-C compiler test program T03          *
+ *   Purpose: Testing Vanilla-C compiler of A3    *
+ *   Test Items:                                  *
+ *     (1) Basic program unit                     *
+ *     (2) Assignment & Expression                *
+ *     (3) I/O Statements - read/print/println    *
+ *   Date: 2016/06/08                             *
+ **************************************************
+*/
+main()
+{
+  // ----------------------------------------------
+  //   SYMBOLIC CONSTANTS AND VARIABLES
+  // ----------------------------------------------
+     const    M1 = "Hello, ";
+     string   Name;
+     int      age, K1;
+     const    ThisYear = 2016;
+  // ----------------------------------------------
+  //   PROCESSING STATEMENTS
+  // ----------------------------------------------
+  print(M1);   println("what is your name?");
+  read (Name);
+  print("Hi, "); print(Name); print(", ");
+  println("pleade enter your age.");
+  read(age);
+  K1 = ThisYear - age +1;
+  print("You were born in year"); println(K1);
+  println("Good-bye.");
+  // --- END OF PROGRAM ---------------------------  
+}

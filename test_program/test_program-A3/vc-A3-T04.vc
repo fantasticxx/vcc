@@ -1,0 +1,34 @@
+/*
+/**************************************************
+ *                                                *
+ *   Program: vc-A3-T04.vc                        *
+ *                                                *
+ *   Vanilla-C compiler test program T04          *
+ *   Purpose: Testing Vanilla-C compiler of A3    *
+ *   Test Items:                                  *
+ *     (1) Basic program unit                     *
+ *     (2) Assignment & Expression                *
+ *     (3) I/O Statements - read/print/println    *
+ *   Note: This is a template.                    *
+ *   Date: 2016/06/18                             *
+ **************************************************
+*/
+main()
+{
+  // ----------------------------------------------
+  //   SYMBOLIC CONSTANTS AND VARIABLES
+  // ----------------------------------------------
+     const    M1 = "Hello, ";
+     string   N;
+     int      K0, K1;
+  // ----------------------------------------------
+  //   PROCESSING STATEMENTS
+  // ----------------------------------------------
+  print(M1); println("program execution starts.");
+  println("Pleade enter a number.");
+  read(K1);
+  K0 = (K1/4)*2;
+  print("The half is"); println(K0);
+  println("Good-bye.");
+  // --- END OF PROGRAM ---------------------------  
+}

@@ -1,0 +1,30 @@
+/*
+/**************************************************
+ *                                                *
+ *   Program: vc-A3-T02.vc                        *
+ *                                                *
+ *   Vanilla-C compiler test program T02          *
+ *   Purpose: Testing Vanilla-C compiler of A3    *
+ *   Test Items:                                  *
+ *     (1) Basic program unit                     *
+ *     (2) Assignment & Expression                *
+ *     (3) I/O Statements - read/print/println    *
+ *   Date: 2016/06/08                             *
+ **************************************************
+*/
+main()
+{
+  // ----------------------------------------------
+  //   SYMBOLIC CONSTANTS AND VARIABLES
+  // ----------------------------------------------
+
+     const    MSG1 = "Hello, world!";
+
+  // ----------------------------------------------
+  //   PROCESSING STATEMENTS
+  // ----------------------------------------------
+
+  println(MSG1);
+
+  // --- END OF PROGRAM ---------------------------  
+}
