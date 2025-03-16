@@ -6,8 +6,7 @@ extern FILE *yyin;
 
 FILE *obj_f;
 FILE *err_f;
-
-//int stack_size = 0;
+char *file_name;
 
 static void usage()
 {
@@ -34,6 +33,7 @@ static void processing_cmd_arg(int argc, char **argv)
 		exit(1);
 	}
 	yyin = fp;
+	file_name = argv[1];
 }
 
 static void start_up_processing(void)
@@ -47,7 +47,7 @@ static void clean_up_processing(void)
 }
 
 int main(int argc, char *argv[])
- {
+{
 	processing_cmd_arg(argc, argv);
 	start_up_processing();
 	st_initialize();
@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	#endif
 	int err = yyparse(&root);
 	if (err == 0) {
-		//ast_tree_traversal(root);
+		ast_tree_traversal(root);
 		codegen(root);
 	}
 	clean_up_processing();

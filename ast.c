@@ -127,7 +127,7 @@ ast_node* assign(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_ASSIGN;
-    node->ctype = left->ctype;
+    node->ctype = right->ctype;
     node->left = left;
     node->right = right;
     return node;

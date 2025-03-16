@@ -99,7 +99,7 @@ init_declarator_list: init_declarator							{ $$ = $1; }
 					;
 
 init_declarator: declarator									{ $$ = $1;}
-			   | declarator '=' initializer					{ $$ = init_declarator($1, $3); }
+			   | declarator '=' initializer					{ $$ = init_declarator($3, $1); }
 			   ;
 
 declarator: direct_declarator								{ $$ = $1; }
@@ -154,7 +154,7 @@ expression: assignment_expression												{ $$ = $1; }
 		  ;
 
 assignment_expression: conditional_expression									{ $$ = $1; }
-					 | unary_expression '=' assignment_expression				{ $$ = assign($1, $3); }
+					 | unary_expression '=' assignment_expression				{ $$ = assign($3, $1); }
 					 ;
 
 conditional_expression: logical_or_expression									{ $$ = $1; }

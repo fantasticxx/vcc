@@ -12,6 +12,7 @@
 #include "ast.h"
 
 extern FILE *obj_f;
+extern char *file_name;
 
 extern int yylex();
 extern int yyparse(ast_node**);

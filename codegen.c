@@ -109,6 +109,7 @@ void emit_title(void)
 {
 	emit_comments("TITLE: %s\n", PROG_F);
 	emit_comments("VCC: %s\n", VCC_version);
+    emit_comments("FILE: %s\n", file_name);
 	fprintf(obj_f, "\n");
 }
 
@@ -223,20 +224,27 @@ static int emit_code(ast_node *root)
     case AST_BLOCK_ITEM_LIST:
         emit_code(root->left);
         emit_code(root->right);
-        return 0;
+        return -1;
     case AST_DECL:
         emit_code(root->init_list);
-        return 0;
+        return -1;
     case AST_INIT_DECL_LIST:
         emit_code(root->left);
         emit_code(root->right);
-        return 0;
+        return -1;
     case AST_INIT_DECL:
+        reg = emit_code(root->left);
+        s = st_lookup(root->right->varname);
+        emit_store(reg, s->offset, root->ctype);
+        free_register();
+        return -1;
     case AST_ASSIGN:
-        reg = emit_code(root->right);
-        s = st_lookup(root->left->varname);
+        reg = emit_code(root->left);
+        s = st_lookup(root->right->varname);
         emit_store(reg, s->offset, root->ctype);
         return reg;
+    case AST_DIRECT_DECL:
+        return -1;
 	default:
 		break;
 	}
