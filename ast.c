@@ -6,6 +6,7 @@
 
 static Ctype *make_string_type(Ctype *ctype, int len);
 Ctype *curr_ctype;
+bool is_const;
 
 Ctype* compare_data_type(Ctype *ctype1, Ctype *ctype2)
 {
@@ -360,41 +361,44 @@ char *ctype_to_str[] = {
     "const",
 };
 
-void ast_tree_traversal(ast_node* root)
+void print_ast(ast_node* root, int indent)
 {
+    for(int i = 0; i < indent; i++) {
+        printf(" ");
+    }
 	if (!root) {
 		printf("NULL\n");
 		return;
 	}
     if (root->type == AST_FUNC) {
         printf("AST_FUNC: %s\n", root->fname);
-        ast_tree_traversal(root->body);
+        print_ast(root->body, indent + 4);
     } else if (root->type == AST_BLOCK_ITEM_LIST) {
         printf("AST_BLOCK_ITEM_LIST: \n");
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     } else if (root->type == AST_DECL) {
         printf("AST_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
-        ast_tree_traversal(root->init_list);
+        print_ast(root->init_list, indent + 4);
     } else if (root->type == AST_INIT_DECL) {
         printf("AST_INIT_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     } else if (root->type == AST_INIT_DECL_LIST) {
         printf("AST_INIT_DECL_LIST: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     } else if (root->type == AST_DIRECT_DECL) {
         printf("AST_DIRECT_DECL: %s: %s<%d>\n", root->varname, ctype_to_str[root->ctype->type], root->ctype->size);
     } else if(root->type == AST_IF) {
         printf("AST_IF\n");
-        ast_tree_traversal(root->cond);
-        ast_tree_traversal(root->then);
-        ast_tree_traversal(root->els);
+        print_ast(root->cond, indent + 4);
+        print_ast(root->then, indent + 4);
+        print_ast(root->els, indent + 4);
     } else if(root->type == AST_WHILE) {
         printf("AST_WHILE\n");
-        ast_tree_traversal(root->cond);
-        ast_tree_traversal(root->body);
+        print_ast(root->cond, indent + 4);
+        print_ast(root->body, indent + 4);
     } else if (root->type == AST_INPUT) {
         printf("AST_INTPUT: %s\n", root->varname);
     } else if (root->type == AST_OUTPUT) {
@@ -403,15 +407,15 @@ void ast_tree_traversal(ast_node* root)
         } else {
             printf("print\n");
         }
-        ast_tree_traversal(root->assign_stmt);
+        print_ast(root->assign_stmt, indent + 4);
     } else if(root->type == AST_EXPR) {
         printf("AST_EXPR\n");
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     } else if (root->type == AST_ASSIGN) {
         printf("AST_ASSIGN\n");
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     } else if (root->type == AST_LITERAL) {
         if (root->ctype->type == CTYPE_CHAR) {
             printf("AST_LITERAL: %c\n", (char)root->ival);
@@ -423,10 +427,10 @@ void ast_tree_traversal(ast_node* root)
     } else if (root->type == AST_ID) {
         symbol *s = NULL;
         HASH_FIND_STR(symtab, root->varname, s);
-        printf("AST_ID: %s: %s<%d>\n", s->name, ctype_to_str[s->ctype->type], s->ctype->size);
+        printf("AST_ID: %s: %s<%d> %s\n", s->name, ctype_to_str[s->ctype->type], s->ctype->size, (s->mutable ? "mutable" : "immutable"));
     } else if (root->type == AST_UNARY_MIUNS) {
         printf("AST_UNARY_MIUNS\n");
-        ast_tree_traversal(root->operand);
+        print_ast(root->operand, indent + 4);
     } else {
         switch(root->type) {
         case AST_LOGICAL_OR:
@@ -480,7 +484,7 @@ void ast_tree_traversal(ast_node* root)
         default:
             break;
         }
-        ast_tree_traversal(root->left);
-        ast_tree_traversal(root->right);
+        print_ast(root->left, indent + 4);
+        print_ast(root->right, indent + 4);
     }
 }

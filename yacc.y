@@ -81,17 +81,21 @@ block_item: declaration									{ $$ = $1; }
 		  | statement									{ $$ = $1; }
 		  ;
 
-declaration: type_specifier init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = NULL;}
+declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = NULL; is_const = false; }
 		   ;
+
+declaration_specifiers: type_specifier
+					  | type_specifier declaration_specifiers
+					  | type_qualifier
+					  | type_qualifier declaration_specifiers
 
 type_specifier: INT                         				{ curr_ctype = ctype_int; }
 		 	  | CHAR                       					{ curr_ctype = ctype_char; }
 		 	  | BOOL                       					{ curr_ctype = ctype_bool; }
 		 	  | STRING                     					{ curr_ctype = ctype_long; }
-		 	  | type_qualifier								{ }
 		 	  ;
 
-type_qualifier: CONST					   					{ curr_ctype = ctype_const; }
+type_qualifier: CONST					   					{ is_const = true; }
 		 	  ;
 
 init_declarator_list: init_declarator							{ $$ = $1; }
@@ -110,7 +114,7 @@ direct_declarator: ID										{
 																yyerror(root, "redefinition of %s\n", $1);
 																YYABORT;
 															  }
-															  st_insert($1, curr_ctype, curr_ctype->type != CTYPE_CONST, @1.first_line, @1.first_column);
+															  st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
 															  $$ = direct_declarator($1);
 															}
 				 | '(' ID ')'								{
@@ -118,7 +122,7 @@ direct_declarator: ID										{
 																yyerror(root, "redefinition of %s\n", $2);
 																YYABORT;
 															  }
-															  st_insert($2, curr_ctype, curr_ctype->type != CTYPE_CONST, @2.first_line, @2.first_column);
+															  st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
 															  $$ = direct_declarator($2);
 															}
 				 ;

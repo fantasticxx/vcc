@@ -57,7 +57,7 @@ int main(int argc, char *argv[])
 	#endif
 	int err = yyparse(&root);
 	if (err == 0) {
-		ast_tree_traversal(root);
+		print_ast(root, 0);
 		codegen(root);
 	}
 	clean_up_processing();

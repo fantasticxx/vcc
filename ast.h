@@ -1,7 +1,9 @@
 #ifndef AST_H
 #define AST_H
 
+#include <stdbool.h>
 #include "list.h"
+
 
 enum {
     AST_LOGICAL_OR,
@@ -123,6 +125,7 @@ typedef struct __ast_node {
 } ast_node;
 
 extern Ctype *curr_ctype;
+extern bool is_const;
 
 extern ast_node *func(char* fname, ast_node* body);
 extern ast_node *block_item_list(ast_node* left, ast_node* right);
@@ -158,6 +161,6 @@ extern ast_node *id(Ctype* ctype, char* name);
 extern ast_node *integer_literal(Ctype* ctype, long val);
 extern ast_node *string(char* str);
 
-void ast_tree_traversal(ast_node* root);
+void print_ast(ast_node* root, int indent);
 
 #endif
