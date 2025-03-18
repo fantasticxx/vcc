@@ -127,6 +127,7 @@ typedef struct __ast_node {
 extern Ctype *curr_ctype;
 extern bool is_const;
 
+extern void ast_initialize(void);
 extern ast_node *func(char* fname, ast_node* body);
 extern ast_node *block_item_list(ast_node* left, ast_node* right);
 extern ast_node *decl(ast_node* init_list);

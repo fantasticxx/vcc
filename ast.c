@@ -16,6 +16,13 @@ Ctype* compare_data_type(Ctype *ctype1, Ctype *ctype2)
     return ctype_int;
 }
 
+void ast_initialize(void)
+{
+    curr_ctype = ctype_int;
+    is_const = false;
+}
+
+
 ast_node* func(char* fname, ast_node* body)
 {
     ast_node *node = malloc(sizeof(ast_node));
@@ -48,9 +55,12 @@ ast_node* decl(ast_node* init_list)
 ast_node* init_declarator(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
-    node->type = AST_INIT_DECL;    
+    node->type = AST_INIT_DECL;
     node->ctype = curr_ctype;
     node->left = left;
+    if (right->ctype == NULL) {
+        right->ctype = left->ctype;
+    }
     node->right = right;
     return node;
 }
@@ -58,7 +68,7 @@ ast_node* init_declarator(ast_node* left, ast_node* right)
 ast_node* init_declarator_list(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
-    node->type = AST_INIT_DECL_LIST;    
+    node->type = AST_INIT_DECL_LIST;
     node->ctype = curr_ctype;
     node->left = left;
     node->right = right;
@@ -188,7 +198,7 @@ ast_node* equality(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_EQ;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -198,7 +208,7 @@ ast_node* not_equality(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_NE;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -208,7 +218,7 @@ ast_node* less_than(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LT;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -218,7 +228,7 @@ ast_node* greater_than(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GT;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -228,7 +238,7 @@ ast_node* less_than_or_equal(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LE;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -238,7 +248,7 @@ ast_node* greater_than_or_equal(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GE;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;

@@ -198,6 +198,60 @@ static int emit_div(int reg1, int reg2, Ctype* ctype)
     return reg1;
 }
 
+static int emit_lt(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsetl %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
+static int emit_gt(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsetg %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
+static int emit_le(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsetle %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
+static int emit_ge(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsetge %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
+static int emit_eq(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsete %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
+static int emit_ne(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "\tsetne %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    free_register();
+    return reg1;
+}
+
 void emit_label(int L)
 {
 	fprintf(obj_f, "_L%4d:\n", L);
@@ -235,12 +289,14 @@ static int emit_code(ast_node *root)
     case AST_INIT_DECL:
         reg = emit_code(root->left);
         s = st_lookup(root->right->varname);
+        eval_data_size(reg, s->ctype, root->left->ctype);
         emit_store(reg, s->offset, root->ctype);
         free_register();
         return -1;
     case AST_ASSIGN:
         reg = emit_code(root->left);
         s = st_lookup(root->right->varname);
+        eval_data_size(reg, s->ctype, root->left->ctype);
         emit_store(reg, s->offset, root->ctype);
         return reg;
     case AST_DIRECT_DECL:
@@ -264,6 +320,18 @@ static int emit_code(ast_node *root)
         return emit_mul(reg1, reg2, root->ctype);
     case AST_DIV:
         return emit_div(reg1, reg2, root->ctype);
+    case AST_LT:
+        return emit_lt(reg1, reg2, root->ctype);
+    case AST_GT:
+        return emit_gt(reg1, reg2, root->ctype);
+    case AST_LE:
+        return emit_le(reg1, reg2, root->ctype);
+    case AST_GE:
+        return emit_ge(reg1, reg2, root->ctype);
+    case AST_EQ:
+        return emit_eq(reg1, reg2, root->ctype);
+    case AST_NE:
+        return emit_ne(reg1, reg2, root->ctype);
     default:
         fprintf(stderr, "internal error: unknown internal node type\n");
         exit(1);

@@ -51,6 +51,7 @@ int main(int argc, char *argv[])
 	processing_cmd_arg(argc, argv);
 	start_up_processing();
 	st_initialize();
+	ast_initialize();
 	ast_node *root = NULL;
 	#ifdef YYDEBUG
 		yydebug = 0;

@@ -51,10 +51,10 @@ static Ctype *ctype_const = &(Ctype){CTYPE_CONST, 8, NULL};
 %left '*' '/' '%' 
 %left '<' '>' LE_OP GE_OP
 
-%nonassoc UMINUS
+%right UMINUS
 
-%precedence ')'
-%precedence ELSE
+%nonassoc LOWER_THAN_ELSE
+%nonassoc ELSE
 
 %start program
 
@@ -81,7 +81,7 @@ block_item: declaration									{ $$ = $1; }
 		  | statement									{ $$ = $1; }
 		  ;
 
-declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = NULL; is_const = false; }
+declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = ctype_int; is_const = false; }
 		   ;
 
 declaration_specifiers: type_specifier
@@ -141,7 +141,7 @@ expression_statement: ';'														{ $$ = NULL; }
 					| expression ';'											{ $$ = $1; }
 			   		;
 
-selection_statement: IF '(' expression ')' statement							{ $$ = if_stmt($3, $5, NULL); }
+selection_statement: IF '(' expression ')' statement %prec LOWER_THAN_ELSE		{ $$ = if_stmt($3, $5, NULL); }
 				   | IF '(' expression ')' statement ELSE statement				{ $$ = if_stmt($3, $5, $7); }
 				   ;
 
