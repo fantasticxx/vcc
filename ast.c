@@ -5,6 +5,11 @@
 #include "yacc.tab.h"
 
 static Ctype *make_string_type(Ctype *ctype, int len);
+
+Ctype *ctype_bool = &(Ctype){CTYPE_BOOL, 1, NULL};
+Ctype *ctype_char = &(Ctype){CTYPE_CHAR, 1, NULL};
+Ctype *ctype_int = &(Ctype){CTYPE_INT, 4, NULL};
+Ctype *ctype_long = &(Ctype){CTYPE_LONG, 8, NULL};
 Ctype *curr_ctype;
 bool is_const;
 
@@ -168,7 +173,7 @@ ast_node* bitwise_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_OR;
-    node->ctype = NULL;
+    node->ctype = compare_data_type(op1->ctype, op2->ctype);
     node->left = op1;
     node->right = op2;
     return node;
@@ -178,7 +183,7 @@ ast_node* bitwise_xor(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_XOR;
-    node->ctype = NULL;
+    node->ctype = compare_data_type(op1->ctype, op2->ctype);
     node->left = op1;
     node->right = op2;
     return node;
@@ -188,7 +193,7 @@ ast_node* bitwise_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_AND;
-    node->ctype = NULL;
+    node->ctype = compare_data_type(op1->ctype, op2->ctype);
     node->left = op1;
     node->right = op2;
     return node;
@@ -298,7 +303,7 @@ ast_node* mod(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_MOD;
-    node->ctype = NULL;
+    node->ctype = compare_data_type(op1->ctype, op2->ctype);
     node->left = op1;
     node->right = op2;
     return node;
@@ -332,7 +337,7 @@ ast_node* id(Ctype *ctype, char *name)
     return node;
 }
 
-ast_node* integer_literal(Ctype* ctype, long val)
+ast_node* integer_literal(Ctype* ctype, int val)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LITERAL;
@@ -362,13 +367,11 @@ static Ctype *make_string_type(Ctype *ctype, int len)
 }
 
 char *ctype_to_str[] = {
-    "void",
     "char",
     "bool",
     "int",
     "long",
     "string",
-    "const",
 };
 
 void print_ast(ast_node* root, int indent)
@@ -430,7 +433,7 @@ void print_ast(ast_node* root, int indent)
         if (root->ctype->type == CTYPE_CHAR) {
             printf("AST_LITERAL: %c\n", (char)root->ival);
         } else {
-            printf("AST_LITERAL: %ld\n", root->ival);
+            printf("AST_LITERAL: %d\n", root->ival);
         }
     } else if (root->type == AST_STRING) {
         printf("%s\n", root->sval);

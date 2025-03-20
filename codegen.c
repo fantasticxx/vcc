@@ -26,6 +26,11 @@ static int align(int n, int m)
     return (rem == 0) ? n : n - rem + m;
 }
 
+void emit_label(int L)
+{
+	fprintf(obj_f, "_L%4d:\n", L);
+}
+
 static void push(int reg)
 {
     fprintf(obj_f, "    push %s\n", REG64[reg]);
@@ -116,10 +121,10 @@ void emit_title(void)
 void emit_prolouge(ast_node *root)
 {
 	fprintf(obj_f, "global _%s\n", root->fname);
-	fprintf(obj_f, "section\t.text\n\n");
+	fprintf(obj_f, "section .text\n\n");
 	fprintf(obj_f, "_%s:\n", root->fname);
-	fprintf(obj_f, "\tpush rbp\n");
-	fprintf(obj_f, "\tmov\trbp, rsp\n");
+	fprintf(obj_f, "    push rbp\n");
+	fprintf(obj_f, "    mov rbp, rsp\n");
 	int off = 0;
 	symbol *s = symtab;
 	while (s) {
@@ -128,53 +133,53 @@ void emit_prolouge(ast_node *root)
 		s = s->hh.next;
 	}
 	stack_pos = align(off, 16);
-	fprintf(obj_f, "\tsub\trsp, %d\n", stack_pos);
+	fprintf(obj_f, "    sub rsp, %d\n", stack_pos);
 }
 
 void emit_epilouge(void)
 {
-	fprintf(obj_f, "\txor\teax, eax\n");
-	fprintf(obj_f, "\tmov\trsp, rbp\n");
-	fprintf(obj_f, "\tpop\trbp\n");
-	fprintf(obj_f, "\tret\n");
+	fprintf(obj_f, "    xor eax, eax\n");
+	fprintf(obj_f, "    mov rsp, rbp\n");
+	fprintf(obj_f, "    pop rbp\n");
+	fprintf(obj_f, "    ret\n");
 }
 
 static int emit_load(long offset, Ctype* ctype)
 {
     int reg = allocate_register();
-    fprintf(obj_f, "\tmov\t%s, %s [rbp - %ld]\n", get_int_reg(reg, ctype), get_size_directive(ctype), offset);
+    fprintf(obj_f, "    mov %s, %s [rbp - %ld]\n", get_int_reg(reg, ctype), get_size_directive(ctype), offset);
     return reg;
 }
 
 static void emit_store(int reg, long offset, Ctype* ctype)
 {
-    fprintf(obj_f, "\tmov\t%s [rbp - %ld], %s\n", get_size_directive(ctype), offset, get_int_reg(reg, ctype));
+    fprintf(obj_f, "    mov %s [rbp - %ld], %s\n", get_size_directive(ctype), offset, get_int_reg(reg, ctype));
 }
 
-static int emit_int(long val, Ctype* ctype)
+static int emit_int(int val, Ctype* ctype)
 {
 	int reg = allocate_register();
-    fprintf(obj_f, "\tmov\t%s, %ld\n", get_int_reg(reg, ctype), val);
+    fprintf(obj_f, "    mov %s, %d\n", get_int_reg(reg, ctype), val);
     return reg;
 }
 
 static int emit_add(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tadd\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    add %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
     free_register();
     return reg1;
 }
 
 static int emit_sub(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tsub\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    sub %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
     free_register();
     return reg1;
 }
 
 static int emit_mul(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\timul\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    imul %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
     free_register();
     return reg1;
 }
@@ -182,80 +187,126 @@ static int emit_mul(int reg1, int reg2, Ctype* ctype)
 static int emit_div(int reg1, int reg2, Ctype* ctype)
 {
     if (ctype == ctype_long) {
-        fprintf(obj_f, "\tmov\trax, %s\n", get_int_reg(reg1, ctype));
-        fprintf(obj_f, "\tmov\trdx, 0\n");
-        fprintf(obj_f, "\tcqo\n");
-        fprintf(obj_f, "\tidiv\t%s\n", get_int_reg(reg2, ctype));
-        fprintf(obj_f, "\tmov\t%s, rax\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov rax, %s\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov rdx, 0\n");
+        fprintf(obj_f, "    cqo\n");
+        fprintf(obj_f, "    idiv %s\n", get_int_reg(reg2, ctype));
+        fprintf(obj_f, "    mov %s, rax\n", get_int_reg(reg1, ctype));
     } else if (ctype == ctype_int) {
-        fprintf(obj_f, "\tmov\teax, %s\n", get_int_reg(reg1, ctype));
-        fprintf(obj_f, "\tmov\tedx, 0\n");
-        fprintf(obj_f, "\tcdq\n");
-        fprintf(obj_f, "\tidiv\t%s\n", get_int_reg(reg2, ctype));
-        fprintf(obj_f, "\tmov\t%s, eax\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov eax, %s\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov edx, 0\n");
+        fprintf(obj_f, "    cdq\n");
+        fprintf(obj_f, "    idiv %s\n", get_int_reg(reg2, ctype));
+        fprintf(obj_f, "    mov %s, eax\n", get_int_reg(reg1, ctype));
     }
     free_register();
     return reg1;
 }
 
+static int emit_mod(int reg1, int reg2, Ctype* ctype)
+{
+    if (ctype == ctype_long) {
+        fprintf(obj_f, "    mov rax, %s\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov rdx, 0\n");
+        fprintf(obj_f, "    cqo\n");
+        fprintf(obj_f, "    idiv %s\n", get_int_reg(reg2, ctype));
+        fprintf(obj_f, "    mov %s, rdx\n", get_int_reg(reg1, ctype));
+    } else if (ctype == ctype_int) {
+        fprintf(obj_f, "    mov eax, %s\n", get_int_reg(reg1, ctype));
+        fprintf(obj_f, "    mov edx, 0\n");
+        fprintf(obj_f, "    cdq\n");
+        fprintf(obj_f, "    idiv %s\n", get_int_reg(reg2, ctype));
+        fprintf(obj_f, "    mov %s, edx\n", get_int_reg(reg1, ctype));
+    }
+    free_register();
+    return reg1;
+}
+
+static int emit_neg(int reg, Ctype* ctype)
+{
+    fprintf(obj_f, "    neg %s\n", get_int_reg(reg, ctype));
+    return reg;
+}
+
 static int emit_lt(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsetl %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    setl %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
 static int emit_gt(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsetg %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    setg %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
 static int emit_le(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsetle %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    setle %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
 static int emit_ge(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsetge %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    setge %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
 static int emit_eq(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsete %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    sete %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
 static int emit_ne(int reg1, int reg2, Ctype* ctype)
 {
-    fprintf(obj_f, "\tcmp\t%s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
-    fprintf(obj_f, "\tsetne %s\n", get_int_reg(reg1, ctype_char));
-    fprintf(obj_f, "\tmovzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    fprintf(obj_f, "    setne %s\n", get_int_reg(reg1, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(reg1, ctype_int), get_int_reg(reg1, ctype_char));
     free_register();
     return reg1;
 }
 
-void emit_label(int L)
+static int emit_and(int reg1, int reg2, Ctype* ctype)
 {
-	fprintf(obj_f, "_L%4d:\n", L);
+    fprintf(obj_f, "    and %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    free_register();
+    return reg1;
 }
+
+static int emit_or(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "    or %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    free_register();
+    return reg1;
+}
+
+static int emit_xor(int reg1, int reg2, Ctype* ctype)
+{
+    fprintf(obj_f, "    xor %s, %s\n", get_int_reg(reg1, ctype), get_int_reg(reg2, ctype));
+    free_register();
+    return reg1;
+}
+
+// static void emit_logic_and(int reg1, int reg2, Ctype* ctype)
+// {
+
+// }
 
 static int emit_code(ast_node *root)
 {
@@ -270,11 +321,14 @@ static int emit_code(ast_node *root)
 		return emit_int(root->ival, root->ctype);
 	case AST_ID:
 		s = st_lookup(root->varname);
-		if (!s) {
-			yyerror(NULL, "use of undeclared identifier '%s'\n", root->varname);
-			exit(1);
-		}
+        if (s == NULL) {
+            fprintf(stderr, "codegen: unknown variable %s", root->varname);
+            exit(1);
+        }
 		return emit_load(s->offset, root->ctype);
+    case AST_UNARY_MIUNS:
+        reg = emit_code(root->operand);
+        return emit_neg(reg, root->ctype);
     case AST_BLOCK_ITEM_LIST:
         emit_code(root->left);
         emit_code(root->right);
@@ -289,6 +343,10 @@ static int emit_code(ast_node *root)
     case AST_INIT_DECL:
         reg = emit_code(root->left);
         s = st_lookup(root->right->varname);
+        if (s == NULL) {
+            fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
+            exit(1);
+        }
         eval_data_size(reg, s->ctype, root->left->ctype);
         emit_store(reg, s->offset, root->ctype);
         free_register();
@@ -296,6 +354,10 @@ static int emit_code(ast_node *root)
     case AST_ASSIGN:
         reg = emit_code(root->left);
         s = st_lookup(root->right->varname);
+        if (s == NULL) {
+            fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
+            exit(1);
+        }
         eval_data_size(reg, s->ctype, root->left->ctype);
         emit_store(reg, s->offset, root->ctype);
         return reg;
@@ -320,6 +382,8 @@ static int emit_code(ast_node *root)
         return emit_mul(reg1, reg2, root->ctype);
     case AST_DIV:
         return emit_div(reg1, reg2, root->ctype);
+    case AST_MOD:
+        return emit_mod(reg1, reg2, root->ctype);
     case AST_LT:
         return emit_lt(reg1, reg2, root->ctype);
     case AST_GT:
@@ -332,8 +396,14 @@ static int emit_code(ast_node *root)
         return emit_eq(reg1, reg2, root->ctype);
     case AST_NE:
         return emit_ne(reg1, reg2, root->ctype);
+    case AST_BITWISE_AND:
+        return emit_and(reg1, reg2, root->ctype);
+    case AST_BITWISE_OR:
+        return emit_or(reg1, reg2, root->ctype);
+    case AST_BITWISE_XOR:
+        return emit_xor(reg1, reg2, root->ctype);
     default:
-        fprintf(stderr, "internal error: unknown internal node type\n");
+        fprintf(stderr, "codegen: unknown AST node type");
         exit(1);
     }
 }

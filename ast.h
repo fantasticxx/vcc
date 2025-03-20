@@ -45,13 +45,11 @@ enum {
 };
 
 enum {
-    CTYPE_VOID,
     CTYPE_CHAR,
     CTYPE_BOOL,
     CTYPE_INT,
     CTYPE_LONG,
     CTYPE_STRING,
-    CTYPE_CONST,
 };
 
 typedef struct __Ctype {
@@ -65,7 +63,7 @@ typedef struct __ast_node {
     int type;
     Ctype *ctype;
     union {
-        long ival;
+        int ival;
 
         struct {
             char *sval;
@@ -124,6 +122,10 @@ typedef struct __ast_node {
     };
 } ast_node;
 
+extern Ctype *ctype_bool;
+extern Ctype *ctype_char;
+extern Ctype *ctype_int;
+extern Ctype *ctype_long;
 extern Ctype *curr_ctype;
 extern bool is_const;
 
@@ -159,7 +161,7 @@ extern ast_node *mod(ast_node* op1, ast_node* op2);
 extern ast_node *cast_expr(Ctype* ctype, ast_node* operand);
 extern ast_node *unary_op(int type, ast_node* operand);
 extern ast_node *id(Ctype* ctype, char* name);
-extern ast_node *integer_literal(Ctype* ctype, long val);
+extern ast_node *integer_literal(Ctype* ctype, int val);
 extern ast_node *string(char* str);
 
 void print_ast(ast_node* root, int indent);

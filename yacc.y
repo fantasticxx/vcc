@@ -4,12 +4,6 @@
 
 extern int yylineno;
 
-static Ctype *ctype_bool = &(Ctype){CTYPE_BOOL, 1, NULL};
-static Ctype *ctype_char = &(Ctype){CTYPE_CHAR, 1, NULL};
-static Ctype *ctype_int = &(Ctype){CTYPE_INT, 4, NULL};
-static Ctype *ctype_long = &(Ctype){CTYPE_LONG, 8, NULL};
-static Ctype *ctype_const = &(Ctype){CTYPE_CONST, 8, NULL};
-
 }
 
 %parse-param {ast_node **root}
@@ -111,7 +105,7 @@ declarator: direct_declarator								{ $$ = $1; }
 
 direct_declarator: ID										{ 
 															  if (st_lookup($1)) {
-																yyerror(root, "redefinition of %s\n", $1);
+																yyerror(root, "parser: redefinition of %s\n", $1);
 																YYABORT;
 															  }
 															  st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
@@ -119,7 +113,7 @@ direct_declarator: ID										{
 															}
 				 | '(' ID ')'								{
 															  if (st_lookup($2)) {
-																yyerror(root, "redefinition of %s\n", $2);
+																yyerror(root, "parser: redefinition of %s\n", $2);
 																YYABORT;
 															  }
 															  st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
@@ -214,7 +208,12 @@ cast_expression: unary_expression												{ $$ = $1; }
 unary_expression: postfix_expression											{ $$ = $1; }
 		  		| unary_operator unary_expression								{ 
 																					if ($1 == '-') {
-																						$$ = unary_op(AST_UNARY_MIUNS, $2);
+																						if ($2->type == AST_LITERAL) {
+																							$2->ival = -$2->ival;
+																							$$ = $2;
+																						} else {
+																							$$ = unary_op(AST_UNARY_MIUNS, $2);
+																						}
 																					} else {
 																						$$ = $2;
 																					}
@@ -231,7 +230,7 @@ postfix_expression: primary_expression											{ $$ = $1; }
 primary_expression: ID															{
 																					symbol *sym = st_lookup($1);
 																					if (sym == NULL) {
-																						yyerror(root, "use of undeclared identifier '%s'\n", $1);
+																						yyerror(root, "parser: use of undeclared identifier '%s'\n", $1);
 																						YYABORT;
 																					}
 																					$$ = id(sym->ctype, sym->name);
@@ -249,7 +248,6 @@ primary_expression: ID															{
 void yyerror(ast_node** root, char *s, ...)
 {
     va_list args;
-
     va_start(args, s);
 	fflush(stderr);
     vfprintf(stderr, s, args);
