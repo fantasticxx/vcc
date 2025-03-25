@@ -115,10 +115,10 @@ typedef struct __ast_node {
         
         struct {
             bool ln;
-            struct __ast_node *assign_stmt;
+            struct __ast_node *assign_expr;
         };
 
-        List *stmts;
+        List *head;
     };
 } ast_node;
 

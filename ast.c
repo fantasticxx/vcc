@@ -119,13 +119,13 @@ ast_node* input(char* varname)
     return node;
 }
 
-ast_node* output(bool ln, ast_node *assign_stmt)
+ast_node* output(bool ln, ast_node *assign_expr)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_OUTPUT;
     node->ctype = NULL;
     node->ln = ln;
-    node->assign_stmt = assign_stmt;
+    node->assign_expr = assign_expr;
     return node;
 }
 
@@ -153,7 +153,7 @@ ast_node* logical_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_OR;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -163,7 +163,7 @@ ast_node* logical_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_AND;
-    node->ctype = NULL;
+    node->ctype = ctype_int;
     node->left = op1;
     node->right = op2;
     return node;
@@ -420,7 +420,7 @@ void print_ast(ast_node* root, int indent)
         } else {
             printf("print\n");
         }
-        print_ast(root->assign_stmt, indent + 4);
+        print_ast(root->assign_expr, indent + 4);
     } else if(root->type == AST_EXPR) {
         printf("AST_EXPR\n");
         print_ast(root->left, indent + 4);
@@ -444,14 +444,21 @@ void print_ast(ast_node* root, int indent)
     } else if (root->type == AST_UNARY_MIUNS) {
         printf("AST_UNARY_MIUNS\n");
         print_ast(root->operand, indent + 4);
+    } else if (root->type == AST_LOGICAL_AND) {
+        printf("AST_LOGICAL_AND\n");
+        Iter iter = list_iter(root->head);
+        for (int i = 0; i < list_len(root->head); i++) {
+            print_ast((ast_node *)iter_next(&iter), indent + 4);
+        }
+    } else if (root->type == AST_LOGICAL_OR) {
+        printf("AST_LOGICAL_OR\n");
+        Iter iter = list_iter(root->head);
+        for (int i = 0; i < list_len(root->head); i++) {
+            print_ast((ast_node *)iter_next(&iter), indent + 4);
+        }
+
     } else {
         switch(root->type) {
-        case AST_LOGICAL_OR:
-            printf("AST_LOGICAL_OR\n");
-            break;
-        case AST_LOGICAL_AND:
-            printf("AST_LOGICAL_AND\n");
-            break;
         case AST_BITWISE_OR:
             printf("AST_BITWISE_OR\n");
             break;

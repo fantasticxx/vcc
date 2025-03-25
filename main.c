@@ -1,5 +1,6 @@
 #include "vcc.h"
 #include "ast.h"
+#include "semantic.h"
 
 extern int yydebug;
 extern FILE *yyin;
@@ -58,7 +59,8 @@ int main(int argc, char *argv[])
 	#endif
 	int err = yyparse(&root);
 	if (err == 0) {
-		print_ast(root, 0);
+		smantic_analysis(root);
+		// print_ast(root, 0);
 		codegen(root);
 	}
 	clean_up_processing();

@@ -10,11 +10,14 @@
 
 #define REG_SIZE 6
 
+static int emit_code(ast_node *root);
+
 static const char *REG64[REG_SIZE] = {"rsi", "rdi", "r8", "r9", "r10", "r11"};
 static const char *REG32[REG_SIZE] = {"esi", "edi", "r8d", "r9d", "r10d", "r11d"};
 static const char *REG16[REG_SIZE] = {"si", "di", "r8w", "r9w", "r10w", "r11w"};
 static const char *REG8[REG_SIZE] = {"sil", "dil", "r8b", "r9b", "r10b", "r11b"};
 static int registers_count = 0;
+static int label_count = 0;
 
 static const char *PROG_F = "Vanilla-C compiler generated code";
 static const char *VCC_version = "1.0";
@@ -24,11 +27,6 @@ static int align(int n, int m)
 {
     int rem = n % m;
     return (rem == 0) ? n : n - rem + m;
-}
-
-void emit_label(int L)
-{
-	fprintf(obj_f, "_L%4d:\n", L);
 }
 
 static void push(int reg)
@@ -101,6 +99,11 @@ static const char* get_size_directive(Ctype* ctype)
     }
 }
 
+static int make_label(void)
+{
+    return label_count++;
+}
+
 void emit_comments(const char *comment, ...)
 {
 	va_list args;
@@ -139,9 +142,17 @@ void emit_prolouge(ast_node *root)
 void emit_epilouge(void)
 {
 	fprintf(obj_f, "    xor eax, eax\n");
+    // for test script
+    // fprintf(obj_f, "    mov eax, dword [rbp - 4]\n");
+    //
 	fprintf(obj_f, "    mov rsp, rbp\n");
 	fprintf(obj_f, "    pop rbp\n");
 	fprintf(obj_f, "    ret\n");
+}
+
+void emit_label(int L)
+{
+    fprintf(obj_f, "_L%d:\n", L);
 }
 
 static int emit_load(long offset, Ctype* ctype)
@@ -303,10 +314,48 @@ static int emit_xor(int reg1, int reg2, Ctype* ctype)
     return reg1;
 }
 
-// static void emit_logic_and(int reg1, int reg2, Ctype* ctype)
-// {
+static int emit_logical_and(List* list)
+{
+    int reg = allocate_register();
+    int end_label = make_label();
+    Iter iter = list_iter(list);
 
-// }
+    const char *reg_name = get_int_reg(reg, ctype_int);
+    fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
+
+    for (int i = 0; i < list_len(list); i++) {
+        int r = emit_code((ast_node *)iter_next(&iter));
+        const char *s = get_int_reg(r, ctype_int);
+        fprintf(obj_f, "    test %s, %s\n", s, s);
+        fprintf(obj_f, "    jz _L%d\n", end_label);
+        free_register();
+    }
+    fprintf(obj_f, "    mov %s, 1\n", reg_name);
+    emit_label(end_label);
+    return reg;
+}
+
+static int emit_logical_or(List* list)
+{
+    int reg = allocate_register();
+    int end_label = make_label();
+    Iter iter = list_iter(list);
+
+    const char *reg_name = get_int_reg(reg, ctype_int);
+    fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
+
+    for (int i = 0; i < list_len(list); i++) {
+        int r = emit_code((ast_node *)iter_next(&iter));
+        const char *s = get_int_reg(r, ctype_int);
+        fprintf(obj_f, "    test %s, %s\n", s, s);
+        fprintf(obj_f, "    mov %s, 1\n", reg_name);
+        fprintf(obj_f, "    jnz _L%d\n", end_label);
+        free_register();
+    }
+    fprintf(obj_f, "    mov %s, 0\n", reg_name);
+    emit_label(end_label);
+    return reg;
+}
 
 static int emit_code(ast_node *root)
 {
@@ -363,6 +412,10 @@ static int emit_code(ast_node *root)
         return reg;
     case AST_DIRECT_DECL:
         return -1;
+    case AST_LOGICAL_AND:
+        return emit_logical_and(root->head);
+    case AST_LOGICAL_OR:
+        return emit_logical_or(root->head);
 	default:
 		break;
 	}

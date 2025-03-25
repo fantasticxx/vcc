@@ -16,10 +16,13 @@ all: $(TARGET)
 #$(TARGET): $(OBJS)
 #	$(CC) -o $@ $(OBJS)
 
-$(TARGET): main.o lex.yy.o yacc.tab.o ast.o symtab.o codegen.o
-	$(CC) -o $@ main.o yacc.tab.o lex.yy.o ast.o symtab.o codegen.o
+$(TARGET): main.o lex.yy.o yacc.tab.o ast.o symtab.o codegen.o semantic.o
+	$(CC) -o $@ main.o yacc.tab.o lex.yy.o ast.o symtab.o codegen.o semantic.o
 
 main.o: main.c yacc.tab.h
+	$(CC) -o $@ $< $(CFLAGS)
+
+semantic.o: semantic.c
 	$(CC) -o $@ $< $(CFLAGS)
 
 symtab.o: symtab.c yacc.tab.h
