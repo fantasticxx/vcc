@@ -324,8 +324,9 @@ static int emit_logical_and(List* list)
     fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
 
     for (int i = 0; i < list_len(list); i++) {
-        int r = emit_code((ast_node *)iter_next(&iter));
-        const char *s = get_int_reg(r, ctype_int);
+        ast_node *node = (ast_node *)iter_next(&iter);
+        int r = emit_code(node);
+        const char *s = get_int_reg(r, node->ctype);
         fprintf(obj_f, "    test %s, %s\n", s, s);
         fprintf(obj_f, "    jz _L%d\n", end_label);
         free_register();
@@ -345,8 +346,9 @@ static int emit_logical_or(List* list)
     fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
 
     for (int i = 0; i < list_len(list); i++) {
-        int r = emit_code((ast_node *)iter_next(&iter));
-        const char *s = get_int_reg(r, ctype_int);
+        ast_node *node = (ast_node *)iter_next(&iter);
+        int r = emit_code(node);
+        const char *s = get_int_reg(r, node->ctype);
         fprintf(obj_f, "    test %s, %s\n", s, s);
         fprintf(obj_f, "    mov %s, 1\n", reg_name);
         fprintf(obj_f, "    jnz _L%d\n", end_label);
