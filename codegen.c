@@ -143,7 +143,7 @@ void emit_epilouge(void)
 {
 	fprintf(obj_f, "    xor eax, eax\n");
     // for test script
-    // fprintf(obj_f, "    mov eax, dword [rbp - 4]\n");
+    // fprintf(obj_f, "    mov eax, dword [rbp - 8]\n");
     //
 	fprintf(obj_f, "    mov rsp, rbp\n");
 	fprintf(obj_f, "    pop rbp\n");
@@ -359,6 +359,29 @@ static int emit_logical_or(List* list)
     return reg;
 }
 
+static int emit_if_stmt(ast_node* root)
+{
+    int reg = emit_code(root->cond);
+    int end_label = make_label();
+    const char *reg_name = get_int_reg(reg, root->cond->ctype);
+    fprintf(obj_f, "    test %s, %s\n", reg_name, reg_name);
+    fprintf(obj_f, "    jz _L%d\n", end_label);
+    free_register();
+    emit_code(root->then);
+    free_register();
+    if (root->els) {
+        int els_label = make_label();
+        fprintf(obj_f, "    jmp _L%d\n", els_label);
+        emit_label(end_label);
+        emit_code(root->els);
+        emit_label(els_label);
+        free_register();
+    } else {
+        emit_label(end_label);
+    }
+    return -1;
+}
+
 static int emit_code(ast_node *root)
 {
 	if (!root) {
@@ -418,6 +441,8 @@ static int emit_code(ast_node *root)
         return emit_logical_and(root->head);
     case AST_LOGICAL_OR:
         return emit_logical_or(root->head);
+    case AST_IF:
+        return emit_if_stmt(root);
 	default:
 		break;
 	}
