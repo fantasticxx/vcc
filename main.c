@@ -60,7 +60,7 @@ int main(int argc, char *argv[])
 	int err = yyparse(&root);
 	if (err == 0) {
 		smantic_analysis(root);
-		// print_ast(root, 0);
+		print_ast(root, 0);
 		codegen(root);
 	}
 	clean_up_processing();

@@ -133,7 +133,7 @@ ast_node* expr(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_EXPR;
-    node->ctype = NULL;
+    node->ctype = right->ctype;
     node->left = left;
     node->right = right;
     return node;

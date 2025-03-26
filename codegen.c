@@ -359,7 +359,7 @@ static int emit_logical_or(List* list)
     return reg;
 }
 
-static int emit_if_stmt(ast_node* root)
+static void emit_if_stmt(ast_node* root)
 {
     int reg = emit_code(root->cond);
     int end_label = make_label();
@@ -379,7 +379,21 @@ static int emit_if_stmt(ast_node* root)
     } else {
         emit_label(end_label);
     }
-    return -1;
+}
+
+static void emit_while_stmt(ast_node* root)
+{
+    int begin_label = make_label();
+    int end_label = make_label();
+    emit_label(begin_label);
+    int reg = emit_code(root->cond);
+    const char *reg_name = get_int_reg(reg, root->cond->ctype);
+    fprintf(obj_f, "    test %s, %s\n", reg_name, reg_name);
+    fprintf(obj_f, "    jz _L%d\n", end_label);
+    free_register();
+    emit_code(root->body);
+    fprintf(obj_f, "    jmp _L%d\n", begin_label);
+    emit_label(end_label);
 }
 
 static int emit_code(ast_node *root)
@@ -405,7 +419,9 @@ static int emit_code(ast_node *root)
         return emit_neg(reg, root->ctype);
     case AST_BLOCK_ITEM_LIST:
         emit_code(root->left);
+        free_register();
         emit_code(root->right);
+        free_register();
         return -1;
     case AST_DECL:
         emit_code(root->init_list);
@@ -441,8 +457,16 @@ static int emit_code(ast_node *root)
         return emit_logical_and(root->head);
     case AST_LOGICAL_OR:
         return emit_logical_or(root->head);
+    case AST_EXPR:
+        emit_code(root->left);
+        free_register();
+        return emit_code(root->right);
     case AST_IF:
-        return emit_if_stmt(root);
+        emit_if_stmt(root);
+        return -1;
+    case AST_WHILE:
+        emit_while_stmt(root);
+        return -1;
 	default:
 		break;
 	}
