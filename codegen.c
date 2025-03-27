@@ -386,12 +386,12 @@ static void emit_while_stmt(ast_node* root)
     int begin_label = make_label();
     int end_label = make_label();
     emit_label(begin_label);
-    int reg = emit_code(root->cond);
-    const char *reg_name = get_int_reg(reg, root->cond->ctype);
+    int reg = emit_code(root->whilecond);
+    const char *reg_name = get_int_reg(reg, root->whilecond->ctype);
     fprintf(obj_f, "    test %s, %s\n", reg_name, reg_name);
     fprintf(obj_f, "    jz _L%d\n", end_label);
     free_register();
-    emit_code(root->body);
+    emit_code(root->whilebody);
     fprintf(obj_f, "    jmp _L%d\n", begin_label);
     emit_label(end_label);
 }
