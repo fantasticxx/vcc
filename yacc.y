@@ -1,6 +1,7 @@
 %code requires {
 #include "vcc.h"
 #include "ast.h"
+#include "list.h"
 
 extern int yylineno;
 
@@ -238,7 +239,7 @@ primary_expression: ID															{
 																				}
 				  | NUMBER														{ $$ = integer_literal(ctype_int, $1); }
 				  | CHAR_CONST													{ $$ = integer_literal(ctype_char, $1); }
-				  | STRING_CONST												{ $$ = string($1); }
+				  | STRING_CONST												{ ast_node* v = string($1); list_push(strings, v); $$ = v; }
 				  | BOOL_VAL													{ $$ = integer_literal(ctype_bool, $1); }
 				  | '(' expression ')'											{ $$ = $2; }
 				  ;

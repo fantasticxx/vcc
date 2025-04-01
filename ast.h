@@ -67,7 +67,7 @@ typedef struct __ast_node {
 
         struct {
             char *sval;
-            char *slabl;
+            int slabel;
         };
 
         struct {
@@ -128,6 +128,7 @@ extern Ctype *ctype_int;
 extern Ctype *ctype_long;
 extern Ctype *curr_ctype;
 extern bool is_const;
+extern List *strings;
 
 extern void ast_initialize(void);
 extern ast_node *func(char* fname, ast_node* body);

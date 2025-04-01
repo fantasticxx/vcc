@@ -3,6 +3,7 @@
 #include "symtab.h"
 #include "ast.h"
 #include "yacc.tab.h"
+#include "list.h"
 
 static Ctype *make_string_type(Ctype *ctype, int len);
 
@@ -12,6 +13,8 @@ Ctype *ctype_int = &(Ctype){CTYPE_INT, 4, NULL};
 Ctype *ctype_long = &(Ctype){CTYPE_LONG, 8, NULL};
 Ctype *curr_ctype;
 bool is_const;
+
+List *strings = &EMPTY_LIST;
 
 Ctype* compare_data_type(Ctype *ctype1, Ctype *ctype2)
 {
@@ -26,7 +29,6 @@ void ast_initialize(void)
     curr_ctype = ctype_int;
     is_const = false;
 }
-
 
 ast_node* func(char* fname, ast_node* body)
 {
@@ -346,16 +348,6 @@ ast_node* integer_literal(Ctype* ctype, int val)
     return node;
 }
 
-ast_node* string(char *str)
-{
-    ast_node *node = malloc(sizeof(ast_node));
-    node->type = AST_STRING;
-    node->ctype = make_string_type(ctype_char, strlen(str) + 1);
-    node->sval = str;
-    // fix
-    return node;
-}
-
 static Ctype *make_string_type(Ctype *ctype, int len)
 {
     Ctype *r = malloc(sizeof(Ctype));
@@ -364,6 +356,22 @@ static Ctype *make_string_type(Ctype *ctype, int len)
     r->size = (len < 0) ? -1 : ctype->size * len;
     r->len = len;
     return r;
+}
+
+static int make_string_label()
+{
+    static int labelseq = 0;
+    return labelseq++;
+}
+
+ast_node* string(char *str)
+{
+    ast_node *node = malloc(sizeof(ast_node));
+    node->type = AST_STRING;
+    node->ctype = make_string_type(ctype_char, strlen(str) + 1);
+    node->sval = str;
+    node->slabel = make_string_label();
+    return node;
 }
 
 char *ctype_to_str[] = {
