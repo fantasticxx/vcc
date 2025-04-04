@@ -16,17 +16,9 @@ bool is_const;
 
 List *strings = &EMPTY_LIST;
 
-Ctype* compare_data_type(Ctype *ctype1, Ctype *ctype2)
-{
-    if (ctype1 == ctype_long || ctype2 == ctype_long) {
-        return ctype_long;
-    }
-    return ctype_int;
-}
-
 void ast_initialize(void)
 {
-    curr_ctype = ctype_int;
+    curr_ctype = NULL;
     is_const = false;
 }
 
@@ -54,7 +46,7 @@ ast_node* decl(ast_node* init_list)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_DECL;
-    node->ctype = curr_ctype;
+    node->ctype = NULL;
     node->init_list = init_list;
     return node;
 }
@@ -76,7 +68,7 @@ ast_node* init_declarator_list(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_INIT_DECL_LIST;
-    node->ctype = curr_ctype;
+    node->ctype = NULL;
     node->left = left;
     node->right = right;
     return node;
@@ -121,12 +113,12 @@ ast_node* input(char* varname)
     return node;
 }
 
-ast_node* output(bool ln, ast_node *assign_expr)
+ast_node* output(bool lf, ast_node *assign_expr)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_OUTPUT;
     node->ctype = NULL;
-    node->ln = ln;
+    node->lf = lf;
     node->assign_expr = assign_expr;
     return node;
 }
@@ -155,7 +147,7 @@ ast_node* logical_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_OR;
-    node->ctype = ctype_int;
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -165,7 +157,7 @@ ast_node* logical_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_AND;
-    node->ctype = ctype_int;
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -175,7 +167,7 @@ ast_node* bitwise_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_OR;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -185,7 +177,7 @@ ast_node* bitwise_xor(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_XOR;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -195,7 +187,7 @@ ast_node* bitwise_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_AND;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -205,7 +197,7 @@ ast_node* equality(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_EQ;
-    node->ctype = ctype_int;
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -235,7 +227,7 @@ ast_node* greater_than(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GT;
-    node->ctype = ctype_int;
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -255,7 +247,7 @@ ast_node* greater_than_or_equal(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GE;
-    node->ctype = ctype_int;
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -265,7 +257,7 @@ ast_node* add(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_ADD;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -275,7 +267,7 @@ ast_node* sub(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_SUB;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -285,7 +277,7 @@ ast_node* mul(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_MUL;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -295,7 +287,7 @@ ast_node* ast_div(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_DIV;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
@@ -305,17 +297,17 @@ ast_node* mod(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_MOD;
-    node->ctype = compare_data_type(op1->ctype, op2->ctype);
+    node->ctype = NULL;
     node->left = op1;
     node->right = op2;
     return node;
 }
 
-ast_node* cast_expr(Ctype *ctype, ast_node *operand)
+ast_node* cast_expr(ast_node *operand)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_CAST_EXPR;
-    node->ctype = ctype;
+    node->ctype = curr_ctype;
     node->operand = operand;
     return node;
 }
@@ -324,7 +316,7 @@ ast_node* unary_op(int type, ast_node *operand)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = type;
-    node->ctype = operand->ctype;
+    node->ctype = NULL;
     node->operand = operand;
     return node;
 }
@@ -399,18 +391,35 @@ void print_ast(ast_node* root, int indent)
         print_ast(root->left, indent + 4);
         print_ast(root->right, indent + 4);
     } else if (root->type == AST_DECL) {
-        printf("AST_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        if (root->ctype == NULL) {
+            printf("AST_DECL: ctype is NULL\n");
+        } else {
+            printf("AST_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        }
         print_ast(root->init_list, indent + 4);
     } else if (root->type == AST_INIT_DECL) {
-        printf("AST_INIT_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        if (root->ctype == NULL) {
+            printf("AST_INIT_DECL: ctype is NULL\n");
+        } else {
+            printf("AST_INIT_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        }
         print_ast(root->left, indent + 4);
         print_ast(root->right, indent + 4);
     } else if (root->type == AST_INIT_DECL_LIST) {
-        printf("AST_INIT_DECL_LIST: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        if (root->ctype == NULL) {
+            printf("AST_INIT_DECL_LIST: ctype is NULL\n");
+        } else {
+            printf("AST_INIT_DECL_LIST: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
+        }
+        
         print_ast(root->left, indent + 4);
         print_ast(root->right, indent + 4);
     } else if (root->type == AST_DIRECT_DECL) {
-        printf("AST_DIRECT_DECL: %s: %s<%d>\n", root->varname, ctype_to_str[root->ctype->type], root->ctype->size);
+        if (root->ctype == NULL) {
+            printf("AST_DIRECT_DECL: %s: ctype is NULL\n", root->varname);
+        } else {
+            printf("AST_DIRECT_DECL: %s: %s<%d>\n", root->varname, ctype_to_str[root->ctype->type], root->ctype->size);
+        }
     } else if(root->type == AST_IF) {
         printf("AST_IF\n");
         print_ast(root->cond, indent + 4);
@@ -423,7 +432,7 @@ void print_ast(ast_node* root, int indent)
     } else if (root->type == AST_INPUT) {
         printf("AST_INTPUT: %s\n", root->varname);
     } else if (root->type == AST_OUTPUT) {
-        if (root->ln) {
+        if (root->lf) {
             printf("PRINTLN\n");
         } else {
             printf("print\n");
@@ -439,7 +448,7 @@ void print_ast(ast_node* root, int indent)
         print_ast(root->right, indent + 4);
     } else if (root->type == AST_LITERAL) {
         if (root->ctype->type == CTYPE_CHAR) {
-            printf("AST_LITERAL: %c\n", (char)root->ival);
+            printf("AST_LITERAL: (char)%c\n", (char)root->ival);
         } else {
             printf("AST_LITERAL: %d\n", root->ival);
         }
@@ -464,7 +473,9 @@ void print_ast(ast_node* root, int indent)
         for (int i = 0; i < list_len(root->head); i++) {
             print_ast((ast_node *)iter_next(&iter), indent + 4);
         }
-
+    } else if (root->type == AST_CAST_EXPR) {
+        printf("AST_CAST_EXPR: cast %s<%d> to %s<%d>\n", ctype_to_str[root->operand->ctype->type], root->operand->ctype->size, ctype_to_str[root->ctype->type], root->ctype->size);
+        print_ast(root->operand, indent + 4);
     } else {
         switch(root->type) {
         case AST_BITWISE_OR:

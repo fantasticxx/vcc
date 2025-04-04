@@ -76,7 +76,7 @@ block_item: declaration									{ $$ = $1; }
 		  | statement									{ $$ = $1; }
 		  ;
 
-declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = ctype_int; is_const = false; }
+declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); curr_ctype = NULL; is_const = false; }
 		   ;
 
 declaration_specifiers: type_specifier
@@ -203,7 +203,7 @@ multiplicative_expression: cast_expression										{ $$ = $1; }
 						 ;
 
 cast_expression: unary_expression												{ $$ = $1; }
-			   | '(' type_specifier ')' cast_expression							{ $$ = cast_expr($2, $4); }
+			   | '(' declaration_specifiers ')' cast_expression					{ $$ = cast_expr($4); }
 			   ;
 
 unary_expression: postfix_expression											{ $$ = $1; }

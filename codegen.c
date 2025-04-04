@@ -31,11 +31,13 @@ static int align(int n, int m)
 
 static void push(int reg)
 {
+    stack_pos += 8;
     fprintf(obj_f, "    push %s\n", REG64[reg]);
 }
 
 static void pop(int reg)
 {
+    stack_pos -= 8;
     fprintf(obj_f, "    pop %s\n", REG64[reg]);
 }
 
@@ -65,7 +67,7 @@ static void eval_data_size(int reg, Ctype* parent, Ctype* child)
     if (parent->size > child->size) {
         if (parent->size == 8 && child->size == 4) {
             fprintf(obj_f, "    movsxd %s, %s\n", REG64[reg], REG32[reg]);
-        } else if (parent->size >= 8 && child->size == 1) {
+        } else if (parent->size == 8 && child->size == 1) {
             fprintf(obj_f, "    movsx %s, %s\n", REG64[reg], REG8[reg]);
         } else if (parent->size == 4 && child->size == 1) {
             fprintf(obj_f, "    movsx %s, %s\n", REG32[reg], REG8[reg]);
@@ -75,7 +77,7 @@ static void eval_data_size(int reg, Ctype* parent, Ctype* child)
 
 static const char *get_int_reg(int reg, Ctype* ctype)
 {
-    if (ctype->size == 8) {
+    if (ctype->size == 8 || ctype->type == CTYPE_STRING) {
         return REG64[reg];
     } else if (ctype->size == 4) {
         return REG32[reg];
@@ -129,12 +131,15 @@ static void emit_string_label(int L)
 static void emit_data()
 {
     fprintf(obj_f, "section .data\n");
+    fprintf(obj_f, "_fmtd: db \"%%d\", 0\n");
+    fprintf(obj_f, "_fmtc: db \"%%c\", 0\n");
+    fprintf(obj_f, "_lf: db 10, 0\n");
     list_reverse(strings);
     Iter iter = list_iter(strings);
     for (int i = 0; i < list_len(strings); i++) {
         ast_node *v = (ast_node *)iter_next(&iter);
         emit_string_label(v->slabel);
-        fprintf(obj_f, "    db %s, 0\n", v->sval);
+        fprintf(obj_f, " db %s, 0\n", v->sval);
     }
     fprintf(obj_f, "\n");
 }
@@ -142,8 +147,8 @@ static void emit_data()
 static void emit_prolouge(ast_node *root)
 {
 	fprintf(obj_f, "global _%s\n", root->fname);
-    fprintf(obj_f, "extern _printf\n");
-	fprintf(obj_f, "section .text\n\n");
+    fprintf(obj_f, "extern _printf\n\n");
+	fprintf(obj_f, "section .text\n");
 	fprintf(obj_f, "_%s:\n", root->fname);
 	fprintf(obj_f, "    push rbp\n");
 	fprintf(obj_f, "    mov rbp, rsp\n");
@@ -162,7 +167,7 @@ static void emit_epilouge(void)
 {
 	fprintf(obj_f, "    xor eax, eax\n");
     // for test script
-    // fprintf(obj_f, "    mov eax, dword [rbp - 8]\n");
+    // fprintf(obj_f, "    mov eax, dword [rbp - 4]\n");
     //
 	fprintf(obj_f, "    mov rsp, rbp\n");
 	fprintf(obj_f, "    pop rbp\n");
@@ -431,10 +436,47 @@ static void emit_while_stmt(ast_node* root)
     emit_label(end_label);
 }
 
+static void emit_print(int reg, Ctype* ctype, bool lf)
+{
+    push(0);
+    push(1);
+    int align = stack_pos % 16;
+    if (align != 0) {
+        fprintf(obj_f, "    sub rsp, %d\n", align);
+        stack_pos += align;
+    }
+    if (ctype == ctype_char) {
+        fprintf(obj_f, "    movsx %s, %s\n", REG64[0], get_int_reg(reg, ctype));
+        fprintf(obj_f, "    lea rdi, [rel _fmtc]\n");
+    } else if (ctype == ctype_bool) {
+        fprintf(obj_f, "    movsx %s, %s\n", REG64[0], get_int_reg(reg, ctype));
+        fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
+    } else if (ctype == ctype_int) {
+        fprintf(obj_f, "    movsxd %s, %s\n", REG64[0], get_int_reg(reg, ctype));
+        fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
+    } else {
+        fprintf(obj_f, "    mov %s, %s\n", REG64[1], get_int_reg(reg, ctype_long));
+    }
+    fprintf(obj_f, "    xor rax, rax\n");
+    fprintf(obj_f, "    call _printf\n");
+    if (lf) {
+        fprintf(obj_f, "    lea rdi, [rel _lf]\n");
+        fprintf(obj_f, "    xor rax, rax\n");
+        fprintf(obj_f, "    call _printf\n");
+    }
+    if (align != 0) {
+        fprintf(obj_f, "    add rsp, %d\n", align);
+        stack_pos -= align;
+    }
+    pop(1);
+    pop(0);
+    free_register();
+}
+
 static int emit_code(ast_node *root)
 {
 	if (!root) {
-        return 0;
+        return -1;
     }
     int reg;
     symbol *s = NULL;
@@ -470,7 +512,7 @@ static int emit_code(ast_node *root)
             exit(1);
         }
         eval_data_size(reg, s->ctype, root->left->ctype);
-        emit_store(reg, s->offset, root->ctype);
+        emit_store(reg, s->offset, s->ctype);
         free_register();
         return -1;
     case AST_ASSIGN:
@@ -493,11 +535,19 @@ static int emit_code(ast_node *root)
         emit_code(root->left);
         free_register();
         return emit_code(root->right);
+    case AST_CAST_EXPR:
+        reg = emit_code(root->operand);
+        eval_data_size(reg, root->ctype, root->operand->ctype);
+        return reg;
     case AST_IF:
         emit_if_stmt(root);
         return -1;
     case AST_WHILE:
         emit_while_stmt(root);
+        return -1;
+    case AST_OUTPUT:
+        reg = emit_code(root->assign_expr);
+        emit_print(reg, root->assign_expr->ctype, root->lf);
         return -1;
 	default:
 		break;
