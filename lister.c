@@ -1,3 +1,7 @@
+#include <stdio.h>
+#include "symtab.h"
+#include "vcc.h"
+
 
 
 // void print_source_char(void) {

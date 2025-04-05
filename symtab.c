@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <assert.h>
+#include <stdio.h>
 #include "ast.h"
 #include "symtab.h"
 
@@ -29,9 +30,12 @@ symbol* st_lookup(char *name)
 	return s;
 } 
 
-void st_update(char *name, long val)
+void st_update(char *name, Ctype *ctype)
 {
-	
+	symbol *s = st_lookup(name);
+	if (s) {
+		s->ctype = ctype;
+	}
 }
 
 /* Procedure printSymTab prints a formatted 
@@ -50,4 +54,16 @@ void which_type() {
 
 void which_value() {
 
+}
+
+void print_symbol_table(symbol* symtab)
+{
+    for (symbol *cur = symtab; cur; cur = cur->hh.next) {
+        printf("Name: %s, Type: %s, Mutable: %s, Line No: %d, Loc: %d\n",
+               (cur->name ? cur->name : "NULL"),
+               (cur->ctype ? ctype_to_str[cur->ctype->type] : "NULL"),
+               cur->mutable ? "true" : "false",
+               cur->line_no,
+               cur->loc);
+    }
 }

@@ -4,17 +4,29 @@
 #include "ast.h"
 #include "yacc.tab.h"
 #include "list.h"
+#include "semantic.h"
 
-static Ctype *make_string_type(Ctype *ctype, int len);
-
-Ctype *ctype_bool = &(Ctype){CTYPE_BOOL, 1, NULL};
-Ctype *ctype_char = &(Ctype){CTYPE_CHAR, 1, NULL};
-Ctype *ctype_int = &(Ctype){CTYPE_INT, 4, NULL};
-Ctype *ctype_long = &(Ctype){CTYPE_LONG, 8, NULL};
+Ctype *ctype_bool = &(Ctype){CTYPE_BOOL, 1};
+Ctype *ctype_char = &(Ctype){CTYPE_CHAR, 1};
+Ctype *ctype_int = &(Ctype){CTYPE_INT, 4};
+Ctype *ctype_long = &(Ctype){CTYPE_LONG, 8};
+Ctype *ctype_string = &(Ctype){CTYPE_STRING, 8};
 Ctype *curr_ctype;
 bool is_const;
 
 List *strings = &EMPTY_LIST;
+
+// static Ctype* infer_type(Ctype* ltype, Ctype* rtype)
+// {
+//     if (rtype == NULL) {
+//         curr_ctype = ltype;
+//         return ltype;
+//     }
+//     if (ltype == NULL) {
+//         return ctype_int;
+//     }
+//     return rtype;
+// }
 
 void ast_initialize(void)
 {
@@ -55,11 +67,12 @@ ast_node* init_declarator(ast_node* left, ast_node* right)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_INIT_DECL;
-    node->ctype = curr_ctype;
     node->left = left;
     if (right->ctype == NULL) {
         right->ctype = left->ctype;
+        st_update(right->varname, right->ctype);
     }
+    node->ctype = right->ctype;
     node->right = right;
     return node;
 }
@@ -147,7 +160,7 @@ ast_node* logical_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_OR;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -157,7 +170,7 @@ ast_node* logical_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LOGICAL_AND;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -167,7 +180,7 @@ ast_node* bitwise_or(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_OR;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -177,7 +190,7 @@ ast_node* bitwise_xor(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_XOR;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -187,7 +200,7 @@ ast_node* bitwise_and(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_BITWISE_AND;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -197,7 +210,7 @@ ast_node* equality(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_EQ;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -207,7 +220,7 @@ ast_node* not_equality(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_NE;
-    node->ctype = ctype_int;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -217,7 +230,7 @@ ast_node* less_than(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LT;
-    node->ctype = ctype_int;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -227,7 +240,7 @@ ast_node* greater_than(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GT;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -237,7 +250,7 @@ ast_node* less_than_or_equal(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_LE;
-    node->ctype = ctype_int;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -247,7 +260,7 @@ ast_node* greater_than_or_equal(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_GE;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -257,7 +270,7 @@ ast_node* add(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_ADD;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -267,7 +280,7 @@ ast_node* sub(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_SUB;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -277,7 +290,7 @@ ast_node* mul(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_MUL;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -287,7 +300,7 @@ ast_node* ast_div(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_DIV;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -297,7 +310,7 @@ ast_node* mod(ast_node* op1, ast_node* op2)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_MOD;
-    node->ctype = NULL;
+    node->ctype = DEFAULT_CTYPE;
     node->left = op1;
     node->right = op2;
     return node;
@@ -340,16 +353,6 @@ ast_node* integer_literal(Ctype* ctype, int val)
     return node;
 }
 
-static Ctype *make_string_type(Ctype *ctype, int len)
-{
-    Ctype *r = malloc(sizeof(Ctype));
-    r->type = CTYPE_STRING;
-    r->ptr = ctype;
-    r->size = (len < 0) ? -1 : ctype->size * len;
-    r->len = len;
-    return r;
-}
-
 static int make_string_label()
 {
     static int labelseq = 0;
@@ -360,7 +363,7 @@ ast_node* string(char *str)
 {
     ast_node *node = malloc(sizeof(ast_node));
     node->type = AST_STRING;
-    node->ctype = make_string_type(ctype_char, strlen(str) + 1);
+    node->ctype = ctype_string;
     node->sval = str;
     node->slabel = make_string_label();
     return node;
@@ -418,7 +421,9 @@ void print_ast(ast_node* root, int indent)
         if (root->ctype == NULL) {
             printf("AST_DIRECT_DECL: %s: ctype is NULL\n", root->varname);
         } else {
-            printf("AST_DIRECT_DECL: %s: %s<%d>\n", root->varname, ctype_to_str[root->ctype->type], root->ctype->size);
+            printf("AST_DIRECT_DECL: %s: %s<%d> ", root->varname, ctype_to_str[root->ctype->type], root->ctype->size);
+            symbol *s = st_lookup(root->varname);
+            printf("Symbol: %s: %s\n", s->name, s->ctype ? ctype_to_str[s->ctype->type] : "NULL");
         }
     } else if(root->type == AST_IF) {
         printf("AST_IF\n");
@@ -435,7 +440,7 @@ void print_ast(ast_node* root, int indent)
         if (root->lf) {
             printf("PRINTLN\n");
         } else {
-            printf("print\n");
+            printf("PRINT\n");
         }
         print_ast(root->assign_expr, indent + 4);
     } else if(root->type == AST_EXPR) {
@@ -457,7 +462,8 @@ void print_ast(ast_node* root, int indent)
     } else if (root->type == AST_ID) {
         symbol *s = NULL;
         HASH_FIND_STR(symtab, root->varname, s);
-        printf("AST_ID: %s: %s<%d> %s\n", s->name, ctype_to_str[s->ctype->type], s->ctype->size, (s->mutable ? "mutable" : "immutable"));
+        printf("AST_ID: %s: %s<%d> %s ", s->name, ctype_to_str[s->ctype->type], s->ctype->size, (s->mutable ? "mutable" : "immutable"));
+        printf("root->ctype: %s\n", root->ctype ? ctype_to_str[root->ctype->type] : "NULL");
     } else if (root->type == AST_UNARY_MIUNS) {
         printf("AST_UNARY_MIUNS\n");
         print_ast(root->operand, indent + 4);

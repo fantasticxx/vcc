@@ -18,11 +18,8 @@ extern int yylex();
 extern int yyparse(ast_node**);
 extern void yyerror(ast_node**, char *, ...);
 
-/* symtab.c */
-extern void st_initialize();
-extern void st_insert(char *name, Ctype *ctype, bool mutalbe, int line_no, int loc);
-extern symbol* st_lookup(char *name);
-
 /* codegen.c */
 extern void codegen(ast_node* root);
+
+
 #endif

@@ -80,14 +80,13 @@ declaration: declaration_specifiers init_declarator_list ';' 	{ $$ = decl($2); c
 		   ;
 
 declaration_specifiers: type_specifier
-					  | type_specifier declaration_specifiers
 					  | type_qualifier
-					  | type_qualifier declaration_specifiers
-
+					  | type_qualifier type_specifier
+					  ;
 type_specifier: INT                         				{ curr_ctype = ctype_int; }
 		 	  | CHAR                       					{ curr_ctype = ctype_char; }
 		 	  | BOOL                       					{ curr_ctype = ctype_bool; }
-		 	  | STRING                     					{ curr_ctype = ctype_long; }
+		 	  | STRING                     					{ curr_ctype = ctype_string; }
 		 	  ;
 
 type_qualifier: CONST					   					{ is_const = true; }

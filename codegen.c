@@ -77,7 +77,7 @@ static void eval_data_size(int reg, Ctype* parent, Ctype* child)
 
 static const char *get_int_reg(int reg, Ctype* ctype)
 {
-    if (ctype->size == 8 || ctype->type == CTYPE_STRING) {
+    if (ctype->size == 8) {
         return REG64[reg];
     } else if (ctype->size == 4) {
         return REG32[reg];
@@ -188,7 +188,7 @@ static int emit_load(ast_node* root)
     }
     int dst = allocate_register();
     if (s->ctype->type == CTYPE_STRING) {
-        fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_long), root->slabel);
+        fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_string), root->slabel);
     } else {
         fprintf(obj_f, "    mov %s, %s [rbp - %d]\n", get_int_reg(dst, s->ctype), get_size_directive(s->ctype), s->offset);
     }
@@ -210,7 +210,7 @@ static int emit_int(int val, Ctype* ctype)
 static int emit_string(int slabel)
 {
     int dst = allocate_register();
-    fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_long), slabel);
+    fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_string), slabel);
     return dst;
 }
 
@@ -455,7 +455,7 @@ static void emit_print(int reg, Ctype* ctype, bool lf)
         fprintf(obj_f, "    movsxd %s, %s\n", REG64[0], get_int_reg(reg, ctype));
         fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
     } else {
-        fprintf(obj_f, "    mov %s, %s\n", REG64[1], get_int_reg(reg, ctype_long));
+        fprintf(obj_f, "    mov %s, %s\n", REG64[1], get_int_reg(reg, ctype_string));
     }
     fprintf(obj_f, "    xor rax, rax\n");
     fprintf(obj_f, "    call _printf\n");
@@ -511,7 +511,7 @@ static int emit_code(ast_node *root)
             fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
             exit(1);
         }
-        eval_data_size(reg, s->ctype, root->left->ctype);
+        eval_data_size(reg, root->ctype, root->left->ctype);
         emit_store(reg, s->offset, s->ctype);
         free_register();
         return -1;
@@ -522,7 +522,7 @@ static int emit_code(ast_node *root)
             fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
             exit(1);
         }
-        eval_data_size(reg, s->ctype, root->left->ctype);
+        eval_data_size(reg, root->ctype, root->left->ctype);
         emit_store(reg, s->offset, root->ctype);
         return reg;
     case AST_DIRECT_DECL:

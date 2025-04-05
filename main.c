@@ -1,6 +1,7 @@
 #include "vcc.h"
 #include "ast.h"
 #include "semantic.h"
+#include "symtab.h"
 
 extern int yydebug;
 extern FILE *yyin;
@@ -61,6 +62,7 @@ int main(int argc, char *argv[])
 	if (err == 0) {
 		smantic_analysis(root);
 		print_ast(root, 0);
+		print_symbol_table(symtab);
 		codegen(root);
 	}
 	clean_up_processing();

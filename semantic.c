@@ -1,8 +1,7 @@
 #include "semantic.h"
 #include "yacc.tab.h"
 #include "ast.h"
-
-#define DEFAULT_TYPE ctype_int
+#include "symtab.h"
 
 static Ctype* promote_type(Ctype* type)
 {
@@ -105,17 +104,25 @@ static void check_variable_declaration(ast_node* root)
         check_variable_declaration(root->right);
     } else if (root->type == AST_INIT_DECL) {
         Ctype *ltype = check_expression(root->left);
+        if (root->right->ctype == NULL) {
+            root->right->ctype = ltype ? ltype : DEFAULT_CTYPE;
+        }
+        check_variable_declaration(root->right);
         if (ltype != root->right->ctype) {
-            if (ltype->type == CTYPE_STRING) {
+            if (ltype == ctype_string) {
                 fprintf(stderr, "warning: incompatible type conversion: string to %s\n", ctype_to_str[root->right->ctype->type]);
             }
-            if (root->right->ctype->type == CTYPE_STRING) {
+            if (root->right->ctype == ctype_string) {
                 fprintf(stderr, "warning: incompatible type conversion: %s to string\n", ctype_to_str[ltype->type]);
             }
         }
     } else if (root->type == AST_DIRECT_DECL) {
-        if (root->ctype == NULL) {
-            root->ctype = DEFAULT_TYPE;
+        symbol *s = st_lookup(root->varname);
+        if (s->ctype == NULL) {
+            if (root->ctype == NULL) {
+                root->ctype = DEFAULT_CTYPE;
+            }
+            st_update(root->varname, root->ctype);
         }
     }
 }

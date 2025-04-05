@@ -55,8 +55,6 @@ enum {
 typedef struct __Ctype {
     int type;
     int size;
-    struct __Ctype *ptr; /* pointer or array */
-    int len;             /* array length */
 } Ctype;
 
 typedef struct __ast_node {
@@ -126,6 +124,7 @@ extern Ctype *ctype_bool;
 extern Ctype *ctype_char;
 extern Ctype *ctype_int;
 extern Ctype *ctype_long;
+extern Ctype *ctype_string;
 extern Ctype *curr_ctype;
 extern bool is_const;
 extern List *strings;

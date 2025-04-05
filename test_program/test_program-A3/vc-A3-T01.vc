@@ -19,7 +19,7 @@ main()
   //   PROCESSING STATEMENTS
   // ----------------------------------------------
 
-  println("Hello, world!);
+  println("Hello, world!");
 
   // --- END OF PROGRAM ---------------------------  
 }
