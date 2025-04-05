@@ -61,8 +61,8 @@ int main(int argc, char *argv[])
 	int err = yyparse(&root);
 	if (err == 0) {
 		smantic_analysis(root);
-		print_ast(root, 0);
-		print_symbol_table(symtab);
+		// print_ast(root, 0);
+		// print_symbol_table(symtab);
 		codegen(root);
 	}
 	clean_up_processing();

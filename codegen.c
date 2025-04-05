@@ -148,6 +148,7 @@ static void emit_prolouge(ast_node *root)
 {
 	fprintf(obj_f, "global _%s\n", root->fname);
     fprintf(obj_f, "extern _printf\n\n");
+    fprintf(obj_f, "extern _scanf\n");
 	fprintf(obj_f, "section .text\n");
 	fprintf(obj_f, "_%s:\n", root->fname);
 	fprintf(obj_f, "    push rbp\n");
@@ -473,6 +474,27 @@ static void emit_print(int reg, Ctype* ctype, bool lf)
     free_register();
 }
 
+static void emit_read(Ctype* ctype, int offset)
+{
+    push(0);
+    push(1);
+    int align = stack_pos % 16;
+    if (align != 0) {
+        fprintf(obj_f, "    sub rsp, %d\n", align);
+        stack_pos += align;
+    }
+    fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
+    fprintf(obj_f, "    lea rsi, [rbp - %d]\n", offset);
+    fprintf(obj_f, "    xor rax, rax\n");
+    fprintf(obj_f, "    call _scanf\n");
+    if (align != 0) {
+        fprintf(obj_f, "    add rsp, %d\n", align);
+        stack_pos -= align;
+    }
+    pop(1);
+    pop(0);
+}
+
 static int emit_code(ast_node *root)
 {
 	if (!root) {
@@ -548,6 +570,10 @@ static int emit_code(ast_node *root)
     case AST_OUTPUT:
         reg = emit_code(root->assign_expr);
         emit_print(reg, root->assign_expr->ctype, root->lf);
+        return -1;
+    case AST_INPUT:
+        s = st_lookup(root->varname);
+        emit_read(s->ctype, s->offset);
         return -1;
 	default:
 		break;

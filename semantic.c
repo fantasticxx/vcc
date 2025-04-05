@@ -151,8 +151,16 @@ static void check_type(ast_node* root)
         check_type(root->whilebody);
     } else if (root->type == AST_OUTPUT) {
         check_expression(root->assign_expr);
-    } else {
-
+    } else if (root->type == AST_INPUT) {
+        symbol *s = st_lookup(root->varname);
+        if (s->mutable == false) {
+            fprintf(stderr, "error: cannot assign to variable %s is immutable\n", root->varname);
+            exit(1);
+        }
+        if (s->ctype != ctype_int) {
+            fprintf(stderr, "error: input variable %s must be int\n", root->varname);
+            exit(1);
+        }
     }
 }
 
