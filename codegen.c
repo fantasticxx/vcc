@@ -147,8 +147,8 @@ static void emit_data()
 static void emit_prolouge(ast_node *root)
 {
 	fprintf(obj_f, "global _%s\n", root->fname);
-    fprintf(obj_f, "extern _printf\n\n");
-    fprintf(obj_f, "extern _scanf\n");
+    fprintf(obj_f, "extern _printf\n");
+    fprintf(obj_f, "extern _scanf\n\n");
 	fprintf(obj_f, "section .text\n");
 	fprintf(obj_f, "_%s:\n", root->fname);
 	fprintf(obj_f, "    push rbp\n");

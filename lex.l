@@ -69,7 +69,7 @@ STRING_CONST			      \"([^\"\\]|\\.)*\"
 {STRING_CONST}			    { yylval.sval = strdup(yytext); return STRING_CONST;}
 {WHITE_SPACE}			      { }
 
-.						            { yyerror(NULL, "%d: Unexpected character: %c", yylineno, yytext[0]);}
+.						            { yyerror(NULL, "%d: Unexpected character: %c\n", yylineno, yytext[0]);}
 
 <INITIAL>"/*"           { BEGIN(COMMENT); }
 <COMMENT>"*/"           { BEGIN(INITIAL); }
