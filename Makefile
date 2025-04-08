@@ -16,6 +16,12 @@ all: $(TARGET)
 #$(TARGET): $(OBJS)
 #	$(CC) -o $@ $(OBJS)
 
+test: $(TARGET)
+	@echo
+	@echo "Running tests..."
+	./driver.sh
+	@echo "Tests completed."
+
 $(TARGET): main.o lex.yy.o yacc.tab.o ast.o symtab.o codegen.o semantic.o
 	$(CC) -o $@ main.o yacc.tab.o lex.yy.o ast.o symtab.o codegen.o semantic.o
 
@@ -46,6 +52,6 @@ lex.yy.c: lex.l
 yacc.tab.c yacc.tab.h: yacc.y
 	$(YACC) $(YFLAGS) $<
 
-.PHONY: clean
+.PHONY: clean test
 clean:
 	$(RM) $(TARGET) lex.yy.c yacc.tab.c yacc.output yacc.tab.h $(OBJS)

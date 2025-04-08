@@ -51,7 +51,6 @@ static void clean_up_processing(void)
 int main(int argc, char *argv[])
 {
 	processing_cmd_arg(argc, argv);
-	start_up_processing();
 	st_initialize();
 	ast_initialize();
 	ast_node *root = NULL;
@@ -63,6 +62,7 @@ int main(int argc, char *argv[])
 		smantic_analysis(root);
 		// print_ast(root, 0);
 		// print_symbol_table(symtab);
+		start_up_processing();
 		codegen(root);
 	}
 	clean_up_processing();

@@ -15,6 +15,7 @@ run_test() {
     
     if [ ! -f "$file" ]; then
         echo "❌ Error: Test file $file not found"
+        echo "----------------------------------------"
         return 1
     fi
 
@@ -22,6 +23,7 @@ run_test() {
     ./vcc "$file"
     if [ ! -f "a.asm" ]; then
         echo "❌ Error: 'a.asm' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
     
@@ -29,6 +31,7 @@ run_test() {
     nasm -f macho64 a.asm
     if [ ! -f "a.o" ]; then
         echo "❌ Error: 'a.o' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
     
@@ -36,6 +39,7 @@ run_test() {
     gcc -m64 a.o
     if [ ! -f "a.out" ]; then
         echo "❌ Error: 'a.out' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
     
@@ -107,13 +111,15 @@ run_test_input() {
     ./vcc "$file"
     if [ ! -f "a.asm" ]; then
         echo "❌ Error: 'a.asm' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
-    
+
     # Assemble
     nasm -f macho64 a.asm
     if [ ! -f "a.o" ]; then
         echo "❌ Error: 'a.o' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
     
@@ -121,6 +127,7 @@ run_test_input() {
     gcc -m64 a.o
     if [ ! -f "a.out" ]; then
         echo "❌ Error: 'a.out' was not generated for $file"
+        echo "----------------------------------------"
         return 1
     fi
 

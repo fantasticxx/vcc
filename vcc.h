@@ -15,11 +15,7 @@ extern FILE *obj_f;
 extern char *file_name;
 
 extern int yylex();
-extern int yyparse(ast_node**);
 extern void yyerror(ast_node**, char *, ...);
-
-/* codegen.c */
-extern void codegen(ast_node* root);
-
+extern int yyparse(ast_node**); // 
 
 #endif
