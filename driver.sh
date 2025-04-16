@@ -161,8 +161,8 @@ run_test ./test_program/test_program-A3/vc-A3-T01.vc 0 "Hello, world!"
 run_test ./test_program/test_program-A3/vc-A3-T02.vc 0 "Hello, world!"
 name="Hank"
 age=20
-bornyear=2016-$age+1
-run_test_input ./test_program/test_program-A3/vc-A3-T03.vc 0 "Hello, what is your name?Hi, $name, pleade enter your age.You were born in year$bornyear Good-bye." $name $age
+bornyear=$((2016-age+1))
+run_test_input ./test_program/test_program-A3/vc-A3-T03.vc 0 "Hello, what is your name?\nHi, $name, please enter your age.\nYou were born in year$bornyear\nGood-bye." $name $age
 K=20
 A=$((K/4*2))
 run_test_input ./test_program/test_program-A3/vc-A3-T04.vc 0 "Hello, program execution starts.\nPleade enter a number.\nThe half is$A\nGood-bye." $K

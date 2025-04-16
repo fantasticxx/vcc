@@ -27,7 +27,7 @@ main()
   print(M1);   println("what is your name?");
   read (Name);
   print("Hi, "); print(Name); print(", ");
-  println("pleade enter your age.");
+  println("please enter your age.");
   read(age);
   K1 = ThisYear - age +1;
   print("You were born in year"); println(K1);

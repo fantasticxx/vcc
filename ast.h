@@ -70,10 +70,7 @@ typedef struct __ast_node {
 
         struct {
             char *varname;
-            struct {
-                int loff;
-                char *glabel;
-            };
+            int reserved_label;
         };
 
         struct {
@@ -128,6 +125,7 @@ extern Ctype *ctype_string;
 extern Ctype *curr_ctype;
 extern bool is_const;
 extern List *strings;
+extern List *reserved;
 extern char *ctype_to_str[];
 
 extern void ast_initialize(void);

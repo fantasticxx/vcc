@@ -132,7 +132,9 @@ static void emit_data()
 {
     fprintf(obj_f, "section .data\n");
     fprintf(obj_f, "_fmtd: db \"%%d\", 0\n");
-    fprintf(obj_f, "_fmtc: db \"%%c\", 0\n");
+    fprintf(obj_f, "_fmtpc: db \"%%c\", 0\n");
+    fprintf(obj_f, "_fmtrc: db \" %%c\", 0\n");
+    fprintf(obj_f, "_fmts: db \"%%s\", 0\n");
     fprintf(obj_f, "_lf: db 10, 0\n");
     list_reverse(strings);
     Iter iter = list_iter(strings);
@@ -144,12 +146,30 @@ static void emit_data()
     fprintf(obj_f, "\n");
 }
 
+static void emit_reserved_label(int L)
+{
+    fprintf(obj_f, "_L.res.%d:", L);
+}
+
+static void emit_bss()
+{
+    fprintf(obj_f, "section .bss\n");
+    list_reverse(reserved);
+    Iter iter = list_iter(reserved);
+    for (int i = 0; i < list_len(reserved); i++) {
+        ast_node *v = (ast_node *)iter_next(&iter);
+        emit_reserved_label(v->reserved_label);
+        fprintf(obj_f, "  resb %d\n", STRING_RESERVED_BYTES);
+    }
+    fprintf(obj_f, "\n");
+}
+
 static void emit_prolouge(ast_node *root)
 {
+    fprintf(obj_f, "section .text\n");
 	fprintf(obj_f, "global _%s\n", root->fname);
     fprintf(obj_f, "extern _printf\n");
     fprintf(obj_f, "extern _scanf\n\n");
-	fprintf(obj_f, "section .text\n");
 	fprintf(obj_f, "_%s:\n", root->fname);
 	fprintf(obj_f, "    push rbp\n");
 	fprintf(obj_f, "    mov rbp, rsp\n");
@@ -180,25 +200,16 @@ void emit_label(int L)
     fprintf(obj_f, "_L%d:\n", L);
 }
 
-static int emit_load(ast_node* root)
+static int emit_load(int offset, Ctype* ctype)
 {
-    symbol *s = st_lookup(root->varname);
-    if (s == NULL) {
-        fprintf(stderr, "codegen: unknown variable %s", root->varname);
-        exit(1);
-    }
     int dst = allocate_register();
-    if (s->ctype->type == CTYPE_STRING) {
-        fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_string), root->slabel);
-    } else {
-        fprintf(obj_f, "    mov %s, %s [rbp - %d]\n", get_int_reg(dst, s->ctype), get_size_directive(s->ctype), s->offset);
-    }
+    fprintf(obj_f, "    mov %s, %s [rbp - %d]\n", get_int_reg(dst, ctype), get_size_directive(ctype), offset);
     return dst;
 }
 
-static void emit_store(int src, long offset, Ctype* ctype)
+static void emit_store(int src, int offset, Ctype* ctype)
 {
-    fprintf(obj_f, "    mov %s [rbp - %ld], %s\n", get_size_directive(ctype), offset, get_int_reg(src, ctype));
+    fprintf(obj_f, "    mov %s [rbp - %d], %s\n", get_size_directive(ctype), offset, get_int_reg(src, ctype));
 }
 
 static int emit_int(int val, Ctype* ctype)
@@ -448,10 +459,10 @@ static void emit_print(int reg, Ctype* ctype, bool lf)
     }
     if (ctype == ctype_char) {
         fprintf(obj_f, "    movsx %s, %s\n", REG64[0], get_int_reg(reg, ctype));
-        fprintf(obj_f, "    lea rdi, [rel _fmtc]\n");
+        fprintf(obj_f, "    lea rdi, [rel _fmtpc]\n");
     } else if (ctype == ctype_bool) {
         fprintf(obj_f, "    movsx %s, %s\n", REG64[0], get_int_reg(reg, ctype));
-        fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
+        fprintf(obj_f, "    lea rdi, [rel _fmtpc]\n");
     } else if (ctype == ctype_int) {
         fprintf(obj_f, "    movsxd %s, %s\n", REG64[0], get_int_reg(reg, ctype));
         fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
@@ -483,8 +494,16 @@ static void emit_read(Ctype* ctype, int offset)
         fprintf(obj_f, "    sub rsp, %d\n", align);
         stack_pos += align;
     }
-    fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
-    fprintf(obj_f, "    lea rsi, [rbp - %d]\n", offset);
+    if (ctype == ctype_char || ctype == ctype_bool) {
+        fprintf(obj_f, "    lea rdi, [rel _fmtrc]\n");
+        fprintf(obj_f, "    lea rsi, [rbp - %d]\n", offset);
+    } else if (ctype == ctype_int) {
+        fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
+        fprintf(obj_f, "    lea rsi, [rbp - %d]\n", offset);
+    } else {
+        fprintf(obj_f, "    lea rdi, [rel _fmts]\n");
+        fprintf(obj_f, "    mov rsi, qword [rbp - %d]\n", offset);
+    }
     fprintf(obj_f, "    xor rax, rax\n");
     fprintf(obj_f, "    call _scanf\n");
     if (align != 0) {
@@ -494,6 +513,15 @@ static void emit_read(Ctype* ctype, int offset)
     pop(1);
     pop(0);
 }
+
+static void emit_reseved(int offset, int reserved_label)
+{
+    int dst = allocate_register();
+    fprintf(obj_f, "    lea %s, [rel _L.res.%d]\n", get_int_reg(dst, ctype_string), reserved_label);
+    emit_store(dst, offset, ctype_string);
+    free_register();
+}
+
 
 static int emit_code(ast_node *root)
 {
@@ -509,7 +537,12 @@ static int emit_code(ast_node *root)
     case AST_STRING:
         return emit_string(root->slabel);
 	case AST_ID:
-		return emit_load(root);
+        s = st_lookup(root->varname);
+        if (s == NULL) {
+            fprintf(stderr, "codegen: unknown variable %s", root->varname);
+            exit(1);
+        }
+		return emit_load(s->offset, s->ctype);
     case AST_UNARY_MIUNS:
         reg = emit_code(root->operand);
         return emit_neg(reg, root->ctype);
@@ -527,13 +560,13 @@ static int emit_code(ast_node *root)
         emit_code(root->right);
         return -1;
     case AST_INIT_DECL:
-        reg = emit_code(root->left);
-        s = st_lookup(root->right->varname);
+        reg = emit_code(root->declinit);
+        s = st_lookup(root->declvar->varname);
         if (s == NULL) {
-            fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
+            fprintf(stderr, "codegen: unknown variable %s", root->declvar->varname);
             exit(1);
         }
-        eval_data_size(reg, root->ctype, root->left->ctype);
+        eval_data_size(reg, root->ctype, root->declinit->ctype);
         emit_store(reg, s->offset, s->ctype);
         free_register();
         return -1;
@@ -548,6 +581,10 @@ static int emit_code(ast_node *root)
         emit_store(reg, s->offset, root->ctype);
         return reg;
     case AST_DIRECT_DECL:
+        if (root->ctype == ctype_string && root->reserved_label >= 0) {
+            s = st_lookup(root->varname);
+            emit_reseved(s->offset, root->reserved_label);
+        }
         return -1;
     case AST_LOGICAL_AND:
         return emit_logical_and(root->head);
@@ -624,6 +661,7 @@ void codegen(ast_node* root)
 {
 	emit_title();
     emit_data();
+    emit_bss();
 	stack_pos = 0;
 	emit_prolouge(root);
 	emit_code(root->body);

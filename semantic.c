@@ -3,6 +3,12 @@
 #include "ast.h"
 #include "symtab.h"
 
+static int make_reserved_label()
+{
+    static int labelseq = 0;
+    return labelseq++;
+}
+
 static Ctype* promote_type(Ctype* type)
 {
     if (type->size < 4) {
@@ -103,26 +109,33 @@ static void check_variable_declaration(ast_node* root)
         check_variable_declaration(root->left);
         check_variable_declaration(root->right);
     } else if (root->type == AST_INIT_DECL) {
-        Ctype *ltype = check_expression(root->left);
-        if (root->right->ctype == NULL) {
-            root->right->ctype = ltype ? ltype : DEFAULT_CTYPE;
+        Ctype *ltype = check_expression(root->declinit);
+        if (root->declvar->ctype == NULL) {
+            root->declvar->ctype = ltype ? ltype : DEFAULT_CTYPE;
         }
-        check_variable_declaration(root->right);
-        if (ltype != root->right->ctype) {
+        if (root->declvar->ctype == ctype_string) {
+            root->declvar->reserved_label = -2;
+        }
+        check_variable_declaration(root->declvar);
+        if (ltype != root->declvar->ctype) {
             if (ltype == ctype_string) {
-                fprintf(stderr, "warning: incompatible type conversion: string to %s\n", ctype_to_str[root->right->ctype->type]);
+                fprintf(stderr, "warning: incompatible type conversion: string to %s\n", ctype_to_str[root->declvar->ctype->type]);
             }
-            if (root->right->ctype == ctype_string) {
+            if (root->declvar->ctype == ctype_string) {
                 fprintf(stderr, "warning: incompatible type conversion: %s to string\n", ctype_to_str[ltype->type]);
             }
         }
     } else if (root->type == AST_DIRECT_DECL) {
+        if (root->ctype == NULL) {
+            root->ctype = DEFAULT_CTYPE;
+        }
         symbol *s = st_lookup(root->varname);
         if (s->ctype == NULL) {
-            if (root->ctype == NULL) {
-                root->ctype = DEFAULT_CTYPE;
-            }
-            st_update(root->varname, root->ctype);
+            s->ctype = root->ctype;
+        }
+        if (root->ctype == ctype_string && root->reserved_label == -1 && s->mutable == true) {
+            root->reserved_label = make_reserved_label();
+            list_push(reserved, root);
         }
     }
 }
@@ -157,14 +170,10 @@ static void check_type(ast_node* root)
             fprintf(stderr, "error: cannot assign to variable %s is immutable\n", root->varname);
             exit(1);
         }
-        if (s->ctype != ctype_int) {
-            fprintf(stderr, "error: input variable %s must be int\n", root->varname);
-            exit(1);
-        }
     }
 }
 
-void flatten_logical_and_ast_to_list(ast_node* root, List* list)
+static void flatten_logical_and_ast_to_list(ast_node* root, List* list)
 {
     if (root->type == AST_LOGICAL_AND) {
         flatten_logical_and_ast_to_list(root->left, list);
@@ -174,7 +183,7 @@ void flatten_logical_and_ast_to_list(ast_node* root, List* list)
     }
 }
 
-void flatten_logical_or_ast_to_list(ast_node* root, List* list)
+static void flatten_logical_or_ast_to_list(ast_node* root, List* list)
 {
     if (root->type == AST_LOGICAL_OR) {
         flatten_logical_or_ast_to_list(root->left, list);
@@ -184,7 +193,7 @@ void flatten_logical_or_ast_to_list(ast_node* root, List* list)
     }
 }
 
-void find_logical_operator(ast_node* root)
+static void find_logical_operator(ast_node* root)
 {
     if(!root ||
         root->type == AST_DIRECT_DECL ||

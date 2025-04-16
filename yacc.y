@@ -17,7 +17,7 @@ extern int yylineno;
 	Ctype *ctype;
 }
 
-%token 	<ctype> BOOL CHAR CONST INT STRING
+%token  BOOL CHAR CONST INT STRING
 %token 	READ PRINT PRINTLN
 %token 	IF ELSE WHILE
 %token 	<sval> MAIN ID
