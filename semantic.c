@@ -49,6 +49,9 @@ static void check_is_zero(ast_node* root)
 static Ctype* check_expression(ast_node* root)
 {
     if (root->type == AST_LITERAL || root->type == AST_STRING || root->type == AST_ID) {
+        if (root->ctype == NULL) {
+            root->ctype = DEFAULT_CTYPE;
+        }
         return root->ctype;
     } else if (root->type == AST_EXPR) {
         check_expression(root->left);
