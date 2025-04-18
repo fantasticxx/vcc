@@ -155,7 +155,7 @@ run_test_fail ./test_program/test_program-A1/vc-A1-T02.vc "syntax error"
 run_test_fail ./test_program/test_program-A1/vc-A1-T03.vc "15: Unexpected character: [\n15: Unexpected character: ]\nsyntax error"
 run_test_fail ./test_program/test_program-A1/vc-A1-T04.vc "syntax error"
 run_test ./test_program/test_program-A2/vc-A2-T01.vc 0
-run_test_fail ./test_program/test_program-A2/vc-A2-T02.vc "parser: use of undeclared identifier 'def1'"
+run_test_fail ./test_program/test_program-A2/vc-A2-T02.vc "parser: use of undeclared identifier 'def1'\nparser: use of undeclared identifier 'B77'\nparser: redefinition of y456"
 run_test ./test_program/test_program-A2/vc-A2-T03.vc 0
 run_test ./test_program/test_program-A3/vc-A3-T01.vc 0 "Hello, world!"
 run_test ./test_program/test_program-A3/vc-A3-T02.vc 0 "Hello, world!"

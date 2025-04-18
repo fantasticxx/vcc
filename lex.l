@@ -1,6 +1,5 @@
 %{
 #include "vcc.h"
-
 // TODO: Handle underscores '_' in identifiers 
 %}
 

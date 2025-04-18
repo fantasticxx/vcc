@@ -9,13 +9,12 @@ extern FILE *yyin;
 FILE *obj_f;
 FILE *err_f;
 char *file_name;
+int error_count = 0;
 
 static void usage()
 {
-    fprintf(stdout,
-            "vcc [options] filename\n"
-            "OPTIONS\n"
-            "  -o filename            Write output to the specified file.\n");
+    fprintf(stderr,
+            "vcc: error: no input files\n./vcc filename\n");
 }
 
 static void print_usage_and_exit()
@@ -46,6 +45,7 @@ static void start_up_processing(void)
 static void clean_up_processing(void)
 {
 	fclose(obj_f);
+	fclose(yyin);
 }
 
 int main(int argc, char *argv[])
@@ -58,14 +58,13 @@ int main(int argc, char *argv[])
 		yydebug = 0;
 	#endif
 	int err = yyparse(&root);
-	if (err == 0) {
+	if (err == 0 && error_count == 0) {
 		smantic_analysis(root);
 		// print_ast(root, 0);
 		// print_symbol_table(symtab);
 		start_up_processing();
 		codegen(root);
+		clean_up_processing();
 	}
-	clean_up_processing();
-
-	return err;
+	return err || error_count;
 }

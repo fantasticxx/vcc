@@ -13,6 +13,7 @@
 
 extern FILE *obj_f;
 extern char *file_name;
+extern int error_count;
 
 extern int yylex();
 extern void yyerror(ast_node**, char *, ...);

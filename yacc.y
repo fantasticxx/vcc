@@ -2,9 +2,6 @@
 #include "vcc.h"
 #include "ast.h"
 #include "list.h"
-
-extern int yylineno;
-
 }
 
 %parse-param {ast_node **root}
@@ -17,30 +14,32 @@ extern int yylineno;
 	Ctype *ctype;
 }
 
-%token  BOOL CHAR CONST INT STRING
-%token 	READ PRINT PRINTLN
-%token 	IF ELSE WHILE
-%token 	<sval> MAIN ID
-%token	<ival> BOOL_VAL NUMBER
-%token  <cval> CHAR_CONST
-%token  <sval> STRING_CONST
-%token	<ival> INC_OP DEC_OP LE_OP GE_OP EQ_OP NE_OP AND_OP OR_OP 
-%token	MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN
-%token	AND_ASSIGN XOR_ASSIGN OR_ASSIGN
+%token BOOL CHAR CONST INT STRING
+%token READ PRINT PRINTLN
+%token IF ELSE WHILE
+%token <sval> MAIN ID
+%token <ival> BOOL_VAL NUMBER
+%token <cval> CHAR_CONST
+%token <sval> STRING_CONST
+%token <ival> LE_OP GE_OP EQ_OP NE_OP AND_OP OR_OP
 
-%type <ast>  program prog_body compound_statement block_item_list block_item declaration
-			 init_declarator_list init_declarator declarator direct_declarator initializer
-			 statement expression_statement selection_statement iteration_statement
-			 io_statement expression assignment_expression conditional_expression
-			 logical_or_expression logical_and_expression inclusive_or_expression
-			 exclusive_or_expression and_expression equality_expression relational_expression
-			 additive_expression multiplicative_expression cast_expression
-			 unary_expression postfix_expression primary_expression
+%type <ast> program prog_body 
+%type <ast> block_item_list block_item
+%type <ast> declaration init_declarator_list init_declarator
+%type <ast> declarator direct_declarator initializer
+%type <ast>	statement compound_statement expression_statement
+%type <ast> selection_statement iteration_statement io_statement
+%type <ast>	expression assignment_expression conditional_expression
+%type <ast> logical_or_expression logical_and_expression
+%type <ast> inclusive_or_expression exclusive_or_expression and_expression
+%type <ast> equality_expression relational_expression
+%type <ast> additive_expression multiplicative_expression
+%type <ast> cast_expression unary_expression postfix_expression
+%type <ast> primary_expression
 
-
+%type <sval> prog_hdr
 %type <ctype> type_specifier type_qualifier
 %type <ival> unary_operator
-%type <sval> prog_hdr
 
 %left '+' '-'
 %left '*' '/' '%' 
@@ -55,21 +54,22 @@ extern int yylineno;
 
 %%
 
-program: prog_hdr prog_body								{ *root = func($1, $2); }
+program: prog_hdr prog_body									{ *root = func($1, $2); }
 	   ;
 
-prog_hdr: MAIN '(' ')'									{ $$ = $1; }
+prog_hdr: MAIN '(' ')' 										{ $$ = $1; }
 		;
 
-prog_body: compound_statement							{ $$ = $1; }
+prog_body: compound_statement 								{ $$ = $1; }
 		 ;
 
-compound_statement: '{' '}'								{ $$ = NULL; }
-				  | '{' block_item_list '}'				{ $$ = $2; }
+compound_statement: '{' '}'									{ $$ = NULL; }
+				  | '{' block_item_list '}'					{ $$ = $2; }
 				  ; 
 
-block_item_list: block_item								{ $$ = $1; }
-			   | block_item_list block_item				{ $$ = block_item_list($1, $2); }
+block_item_list: block_item									{ $$ = $1; }
+			   | block_item_list block_item					{ $$ = block_item_list($1, $2); }
+			   | block_item_list error                      { yyerrok; error_count++; $$ = $1;}
 			   ;
 
 block_item: declaration									{ $$ = $1; }
@@ -106,18 +106,20 @@ declarator: direct_declarator								{ $$ = $1; }
 direct_declarator: ID										{ 
 															  if (st_lookup($1)) {
 																yyerror(root, "parser: redefinition of %s\n", $1);
-																YYABORT;
+															  } else {
+																st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
+															  	$$ = direct_declarator($1);
 															  }
-															  st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
-															  $$ = direct_declarator($1);
 															}
 				 | '(' ID ')'								{
 															  if (st_lookup($2)) {
 																yyerror(root, "parser: redefinition of %s\n", $2);
-																YYABORT;
-															  }
-															  st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
+																
+															  } else {
+																st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
 															  $$ = direct_declarator($2);
+															  }
+															  
 															}
 				 ;
 
@@ -231,10 +233,11 @@ primary_expression: ID															{
 																					symbol *sym = st_lookup($1);
 																					if (sym == NULL) {
 																						yyerror(root, "parser: use of undeclared identifier '%s'\n", $1);
-																						YYABORT;
+																					} else {
+																						$$ = id(sym->ctype, sym->name);
+																						free($1);
 																					}
-																					$$ = id(sym->ctype, sym->name);
-																					free($1);
+																					
 																				}
 				  | NUMBER														{ $$ = integer_literal(ctype_int, $1); }
 				  | CHAR_CONST													{ $$ = integer_literal(ctype_char, $1); }
@@ -252,4 +255,5 @@ void yyerror(ast_node** root, char *s, ...)
 	fflush(stderr);
     vfprintf(stderr, s, args);
     va_end(args);
+	error_count++;
 }
