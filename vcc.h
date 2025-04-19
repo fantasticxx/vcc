@@ -11,12 +11,14 @@
 #include "symtab.h"
 #include "yacc.tab.h"
 
-extern FILE *obj_f;
+extern const char *PROG_F;
+extern const char *VCC_version;
 extern char *file_name;
+extern FILE *obj_f;
 extern int error_count;
 
 extern int yylex();
 extern void yyerror(ast_node **, char *, ...);
-extern int yyparse(ast_node **);  //
+extern int yyparse(ast_node **);
 
 #endif

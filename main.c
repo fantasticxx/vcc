@@ -6,10 +6,12 @@
 extern int yydebug;
 extern FILE *yyin;
 
+const char *PROG_F = "Vanilla-C compiler generated code";
+const char *VCC_version = "1.0";
 FILE *obj_f;
 FILE *err_f;
 char *file_name;
-int error_count = 0;
+int error_count;
 
 static void usage()
 {
@@ -53,9 +55,7 @@ int main(int argc, char *argv[])
     st_initialize();
     ast_initialize();
     ast_node *root = NULL;
-#ifdef YYDEBUG
-    yydebug = 0;
-#endif
+    error_count = 0;
     int err = yyparse(&root);
     if (err == 0 && error_count == 0) {
         smantic_analysis(root);

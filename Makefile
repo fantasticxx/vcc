@@ -13,17 +13,14 @@ OBJS = $(SRCS:.c=.o)
 
 all: $(TARGET)
 
-#$(TARGET): $(OBJS)
-#	$(CC) -o $@ $(OBJS)
-
 test: $(TARGET)
 	@echo
 	@echo "Running tests..."
 	./driver.sh
 	@echo "Tests completed."
 
-$(TARGET): main.o lex.yy.o yacc.tab.o ast.o symtab.o codegen.o semantic.o
-	$(CC) -o $@ main.o yacc.tab.o lex.yy.o ast.o symtab.o codegen.o semantic.o
+$(TARGET): $(OBJS)
+	$(CC) -o $@ $(OBJS)
 
 main.o: main.c yacc.tab.h
 	$(CC) -o $@ $< $(CFLAGS)

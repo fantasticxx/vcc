@@ -64,8 +64,8 @@ prog_body: compound_statement                                      { $$ = $1; }
          ;
 
 compound_statement: '{' '}'                                        { $$ = NULL; }
-                 | '{' block_item_list '}'                         { $$ = $2; }
-                 ; 
+                  | '{' block_item_list '}'                        { $$ = $2; }
+                  ; 
 
 block_item_list: block_item                                        { $$ = $1; }
                | block_item_list block_item                        { $$ = block_item_list($1, $2); }

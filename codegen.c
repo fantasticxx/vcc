@@ -16,12 +16,16 @@ static const char *REG64[REG_SIZE] = {"rsi", "rdi", "r8", "r9", "r10", "r11"};
 static const char *REG32[REG_SIZE] = {"esi", "edi", "r8d", "r9d", "r10d", "r11d"};
 static const char *REG16[REG_SIZE] = {"si", "di", "r8w", "r9w", "r10w", "r11w"};
 static const char *REG8[REG_SIZE] = {"sil", "dil", "r8b", "r9b", "r10b", "r11b"};
-static int registers_count = 0;
-static int label_count = 0;
-
-static const char *PROG_F = "Vanilla-C compiler generated code";
-static const char *VCC_version = "1.0";
+static int registers_count;
+static int label_count;
 static int stack_pos;
+
+static void init()
+{
+    registers_count = 0;
+    label_count = 0;
+    stack_pos = 0;
+}
 
 static int align(int n, int m)
 {
@@ -187,9 +191,6 @@ static void emit_prolouge(ast_node *root)
 static void emit_epilouge(void)
 {
     fprintf(obj_f, "    xor eax, eax\n");
-    // for test script
-    // fprintf(obj_f, "    mov eax, dword [rbp - 4]\n");
-    //
     fprintf(obj_f, "    mov rsp, rbp\n");
     fprintf(obj_f, "    pop rbp\n");
     fprintf(obj_f, "    ret");
@@ -524,7 +525,6 @@ static void emit_reseved(int offset, int reserved_label)
     free_register();
 }
 
-
 static int emit_code(ast_node *root)
 {
     if (!root) {
@@ -661,10 +661,10 @@ static int emit_code(ast_node *root)
 
 void codegen(ast_node *root)
 {
+    init();
     emit_title();
     emit_data();
     emit_bss();
-    stack_pos = 0;
     emit_prolouge(root);
     emit_code(root->body);
     emit_epilouge();

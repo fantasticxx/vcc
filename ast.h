@@ -163,6 +163,6 @@ extern ast_node *id(Ctype *ctype, char *name);
 extern ast_node *integer_literal(Ctype *ctype, int val);
 extern ast_node *string(char *str);
 
-void print_ast(ast_node *root, int indent);
+extern void print_ast(ast_node *root, int indent);
 
 #endif
