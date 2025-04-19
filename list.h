@@ -118,7 +118,8 @@ static inline int list_len(List *list)
 static inline void list_free(List *list)
 {
     ListNode *node, *tmp;
-    list_for_each_safe (node, tmp, list) {
+    list_for_each_safe(node, tmp, list)
+    {
         free(node->elem);
         free(node);
     }

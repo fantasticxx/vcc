@@ -1,7 +1,7 @@
 #include "semantic.h"
-#include "yacc.tab.h"
 #include "ast.h"
 #include "symtab.h"
+#include "yacc.tab.h"
 
 static int make_reserved_label()
 {
@@ -9,7 +9,7 @@ static int make_reserved_label()
     return labelseq++;
 }
 
-static Ctype* promote_type(Ctype* type)
+static Ctype *promote_type(Ctype *type)
 {
     if (type->size < 4) {
         return ctype_int;
@@ -17,14 +17,14 @@ static Ctype* promote_type(Ctype* type)
     return type;
 }
 
-static Ctype* get_result_type(Ctype* left, Ctype* right)
+static Ctype *get_result_type(Ctype *left, Ctype *right)
 {
     Ctype *ltype = promote_type(left);
     Ctype *rtype = promote_type(right);
     return ltype->size >= rtype->size ? ltype : rtype;
 }
 
-static void check_mutable(ast_node* root)
+static void check_mutable(ast_node *root)
 {
     symbol *s = st_lookup(root->varname);
     if (s == NULL) {
@@ -32,12 +32,13 @@ static void check_mutable(ast_node* root)
         exit(1);
     }
     if (!s->mutable) {
-        fprintf(stderr, "error: cannot assign to variable %s is immutable\n", root->varname);
+        fprintf(stderr, "error: cannot assign to variable %s is immutable\n",
+                root->varname);
         exit(1);
     }
 }
 
-static void check_is_zero(ast_node* root)
+static void check_is_zero(ast_node *root)
 {
     if (root->type == AST_UNARY_MIUNS || root->type == AST_CAST_EXPR) {
         check_is_zero(root->operand);
@@ -46,9 +47,10 @@ static void check_is_zero(ast_node* root)
     }
 }
 
-static Ctype* check_expression(ast_node* root)
+static Ctype *check_expression(ast_node *root)
 {
-    if (root->type == AST_LITERAL || root->type == AST_STRING || root->type == AST_ID) {
+    if (root->type == AST_LITERAL || root->type == AST_STRING ||
+        root->type == AST_ID) {
         if (root->ctype == NULL) {
             root->ctype = DEFAULT_CTYPE;
         }
@@ -62,10 +64,14 @@ static Ctype* check_expression(ast_node* root)
         check_mutable(root->right);
         if (ltype->type != rtype->type) {
             if (ltype->type == CTYPE_STRING) {
-                fprintf(stderr, "warning: incompatible type conversion: string to %s\n", ctype_to_str[rtype->type]);
+                fprintf(stderr,
+                        "warning: incompatible type conversion: string to %s\n",
+                        ctype_to_str[rtype->type]);
             }
             if (rtype->type == CTYPE_STRING) {
-                fprintf(stderr, "warning: incompatible type conversion: %s to string\n", ctype_to_str[ltype->type]);
+                fprintf(stderr,
+                        "warning: incompatible type conversion: %s to string\n",
+                        ctype_to_str[ltype->type]);
             }
         }
         root->ctype = rtype;
@@ -81,7 +87,8 @@ static Ctype* check_expression(ast_node* root)
     } else if (root->type == AST_CAST_EXPR) {
         Ctype *ctype = check_expression(root->operand);
         if (root->ctype->size < ctype->size) {
-            fprintf(stderr, "warning: cast to smaller type: %s<%d> from %s<%d>\n",
+            fprintf(stderr,
+                    "warning: cast to smaller type: %s<%d> from %s<%d>\n",
                     ctype_to_str[root->ctype->type], root->ctype->size,
                     ctype_to_str[ctype->type], ctype->size);
         }
@@ -106,7 +113,7 @@ static Ctype* check_expression(ast_node* root)
     return root->ctype;
 }
 
-static void check_variable_declaration(ast_node* root)
+static void check_variable_declaration(ast_node *root)
 {
     if (root->type == AST_INIT_DECL_LIST) {
         check_variable_declaration(root->left);
@@ -122,10 +129,14 @@ static void check_variable_declaration(ast_node* root)
         check_variable_declaration(root->declvar);
         if (ltype != root->declvar->ctype) {
             if (ltype == ctype_string) {
-                fprintf(stderr, "warning: incompatible type conversion: string to %s\n", ctype_to_str[root->declvar->ctype->type]);
+                fprintf(stderr,
+                        "warning: incompatible type conversion: string to %s\n",
+                        ctype_to_str[root->declvar->ctype->type]);
             }
             if (root->declvar->ctype == ctype_string) {
-                fprintf(stderr, "warning: incompatible type conversion: %s to string\n", ctype_to_str[ltype->type]);
+                fprintf(stderr,
+                        "warning: incompatible type conversion: %s to string\n",
+                        ctype_to_str[ltype->type]);
             }
         }
     } else if (root->type == AST_DIRECT_DECL) {
@@ -136,14 +147,15 @@ static void check_variable_declaration(ast_node* root)
         if (s->ctype == NULL) {
             s->ctype = root->ctype;
         }
-        if (root->ctype == ctype_string && root->reserved_label == -1 && s->mutable == true) {
+        if (root->ctype == ctype_string && root->reserved_label == -1 &&
+            s->mutable == true) {
             root->reserved_label = make_reserved_label();
             list_push(reserved, root);
         }
     }
 }
 
-static void check_type(ast_node* root)
+static void check_type(ast_node *root)
 {
     if (!root) {
         return;
@@ -170,13 +182,15 @@ static void check_type(ast_node* root)
     } else if (root->type == AST_INPUT) {
         symbol *s = st_lookup(root->varname);
         if (s->mutable == false) {
-            fprintf(stderr, "error: cannot assign to variable %s is immutable\n", root->varname);
+            fprintf(stderr,
+                    "error: cannot assign to variable %s is immutable\n",
+                    root->varname);
             exit(1);
         }
     }
 }
 
-static void flatten_logical_and_ast_to_list(ast_node* root, List* list)
+static void flatten_logical_and_ast_to_list(ast_node *root, List *list)
 {
     if (root->type == AST_LOGICAL_AND) {
         flatten_logical_and_ast_to_list(root->left, list);
@@ -186,7 +200,7 @@ static void flatten_logical_and_ast_to_list(ast_node* root, List* list)
     }
 }
 
-static void flatten_logical_or_ast_to_list(ast_node* root, List* list)
+static void flatten_logical_or_ast_to_list(ast_node *root, List *list)
 {
     if (root->type == AST_LOGICAL_OR) {
         flatten_logical_or_ast_to_list(root->left, list);
@@ -196,13 +210,10 @@ static void flatten_logical_or_ast_to_list(ast_node* root, List* list)
     }
 }
 
-static void find_logical_operator(ast_node* root)
+static void find_logical_operator(ast_node *root)
 {
-    if(!root ||
-        root->type == AST_DIRECT_DECL ||
-        root->type == AST_INPUT ||
-        root->type == AST_LITERAL ||
-        root->type == AST_STRING ||
+    if (!root || root->type == AST_DIRECT_DECL || root->type == AST_INPUT ||
+        root->type == AST_LITERAL || root->type == AST_STRING ||
         root->type == AST_ID) {
         return;
     }
@@ -212,7 +223,7 @@ static void find_logical_operator(ast_node* root)
         root->head = list;
         Iter iter = list_iter(list);
         for (int i = 0; i < list_len(list); i++) {
-            find_logical_operator((ast_node *)iter_next(&iter));
+            find_logical_operator((ast_node *) iter_next(&iter));
         }
     } else if (root->type == AST_LOGICAL_AND) {
         List *list = make_list();
@@ -220,7 +231,7 @@ static void find_logical_operator(ast_node* root)
         root->head = list;
         Iter iter = list_iter(list);
         for (int i = 0; i < list_len(list); i++) {
-            find_logical_operator((ast_node *)iter_next(&iter));
+            find_logical_operator((ast_node *) iter_next(&iter));
         }
     } else if (root->type == AST_FUNC) {
         find_logical_operator(root->body);
@@ -241,7 +252,7 @@ static void find_logical_operator(ast_node* root)
     }
 }
 
-void smantic_analysis(ast_node* root)
+void smantic_analysis(ast_node *root)
 {
     check_type(root);
     find_logical_operator(root);

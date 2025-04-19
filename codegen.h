@@ -5,6 +5,6 @@
 
 #define STRING_RESERVED_BYTES 100
 
-extern void codegen(ast_node* root);
+extern void codegen(ast_node *root);
 
 #endif

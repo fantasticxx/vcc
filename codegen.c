@@ -1,21 +1,23 @@
-#include <stdlib.h>
-#include <stdio.h>
-#include <string.h>
-#include <assert.h>
-#include "vcc.h"
 #include "codegen.h"
-#include "symtab.h"
-#include "yacc.tab.h"
+#include <assert.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 #include "ast.h"
+#include "symtab.h"
+#include "vcc.h"
+#include "yacc.tab.h"
 
 #define REG_SIZE 6
 
 static int emit_code(ast_node *root);
 
 static const char *REG64[REG_SIZE] = {"rsi", "rdi", "r8", "r9", "r10", "r11"};
-static const char *REG32[REG_SIZE] = {"esi", "edi", "r8d", "r9d", "r10d", "r11d"};
+static const char *REG32[REG_SIZE] = {"esi", "edi",  "r8d",
+                                      "r9d", "r10d", "r11d"};
 static const char *REG16[REG_SIZE] = {"si", "di", "r8w", "r9w", "r10w", "r11w"};
-static const char *REG8[REG_SIZE] = {"sil", "dil", "r8b", "r9b", "r10b", "r11b"};
+static const char *REG8[REG_SIZE] = {"sil", "dil",  "r8b",
+                                     "r9b", "r10b", "r11b"};
 static int registers_count = 0;
 static int label_count = 0;
 
@@ -62,7 +64,7 @@ static void free_register()
     }
 }
 
-static void eval_data_size(int reg, Ctype* parent, Ctype* child)
+static void eval_data_size(int reg, Ctype *parent, Ctype *child)
 {
     if (parent->size > child->size) {
         if (parent->size == 8 && child->size == 4) {
@@ -75,7 +77,7 @@ static void eval_data_size(int reg, Ctype* parent, Ctype* child)
     }
 }
 
-static const char *get_int_reg(int reg, Ctype* ctype)
+static const char *get_int_reg(int reg, Ctype *ctype)
 {
     if (ctype->size == 8) {
         return REG64[reg];
@@ -88,7 +90,7 @@ static const char *get_int_reg(int reg, Ctype* ctype)
     }
 }
 
-static const char* get_size_directive(Ctype* ctype)
+static const char *get_size_directive(Ctype *ctype)
 {
     if (ctype->size == 8) {
         return "qword";
@@ -108,19 +110,19 @@ static int make_label(void)
 
 static void emit_comments(const char *comment, ...)
 {
-	va_list args;
-	va_start(args, comment);
-	fprintf(obj_f, "; ");
-	vfprintf(obj_f, comment, args);
-	va_end(args);
+    va_list args;
+    va_start(args, comment);
+    fprintf(obj_f, "; ");
+    vfprintf(obj_f, comment, args);
+    va_end(args);
 }
 
 static void emit_title(void)
 {
-	emit_comments("TITLE: %s\n", PROG_F);
-	emit_comments("VCC: %s\n", VCC_version);
+    emit_comments("TITLE: %s\n", PROG_F);
+    emit_comments("VCC: %s\n", VCC_version);
     emit_comments("FILE: %s\n", file_name);
-	fprintf(obj_f, "\n");
+    fprintf(obj_f, "\n");
 }
 
 static void emit_string_label(int L)
@@ -139,7 +141,7 @@ static void emit_data()
     list_reverse(strings);
     Iter iter = list_iter(strings);
     for (int i = 0; i < list_len(strings); i++) {
-        ast_node *v = (ast_node *)iter_next(&iter);
+        ast_node *v = (ast_node *) iter_next(&iter);
         emit_string_label(v->slabel);
         fprintf(obj_f, " db %s, 0\n", v->sval);
     }
@@ -157,7 +159,7 @@ static void emit_bss()
     list_reverse(reserved);
     Iter iter = list_iter(reserved);
     for (int i = 0; i < list_len(reserved); i++) {
-        ast_node *v = (ast_node *)iter_next(&iter);
+        ast_node *v = (ast_node *) iter_next(&iter);
         emit_reserved_label(v->reserved_label);
         fprintf(obj_f, "  resb %d\n", STRING_RESERVED_BYTES);
     }
@@ -167,32 +169,32 @@ static void emit_bss()
 static void emit_prolouge(ast_node *root)
 {
     fprintf(obj_f, "section .text\n");
-	fprintf(obj_f, "global _%s\n", root->fname);
+    fprintf(obj_f, "global _%s\n", root->fname);
     fprintf(obj_f, "extern _printf\n");
     fprintf(obj_f, "extern _scanf\n\n");
-	fprintf(obj_f, "_%s:\n", root->fname);
-	fprintf(obj_f, "    push rbp\n");
-	fprintf(obj_f, "    mov rbp, rsp\n");
-	int off = 0;
-	symbol *s = symtab;
-	while (s) {
-		off += s->ctype->size;
-		s->offset = off;
-		s = s->hh.next;
-	}
-	stack_pos = align(off, 16);
-	fprintf(obj_f, "    sub rsp, %d\n", stack_pos);
+    fprintf(obj_f, "_%s:\n", root->fname);
+    fprintf(obj_f, "    push rbp\n");
+    fprintf(obj_f, "    mov rbp, rsp\n");
+    int off = 0;
+    symbol *s = symtab;
+    while (s) {
+        off += s->ctype->size;
+        s->offset = off;
+        s = s->hh.next;
+    }
+    stack_pos = align(off, 16);
+    fprintf(obj_f, "    sub rsp, %d\n", stack_pos);
 }
 
 static void emit_epilouge(void)
 {
-	fprintf(obj_f, "    xor eax, eax\n");
+    fprintf(obj_f, "    xor eax, eax\n");
     // for test script
     // fprintf(obj_f, "    mov eax, dword [rbp - 4]\n");
     //
-	fprintf(obj_f, "    mov rsp, rbp\n");
-	fprintf(obj_f, "    pop rbp\n");
-	fprintf(obj_f, "    ret");
+    fprintf(obj_f, "    mov rsp, rbp\n");
+    fprintf(obj_f, "    pop rbp\n");
+    fprintf(obj_f, "    ret");
 }
 
 void emit_label(int L)
@@ -200,21 +202,23 @@ void emit_label(int L)
     fprintf(obj_f, "_L%d:\n", L);
 }
 
-static int emit_load(int offset, Ctype* ctype)
+static int emit_load(int offset, Ctype *ctype)
 {
     int dst = allocate_register();
-    fprintf(obj_f, "    mov %s, %s [rbp - %d]\n", get_int_reg(dst, ctype), get_size_directive(ctype), offset);
+    fprintf(obj_f, "    mov %s, %s [rbp - %d]\n", get_int_reg(dst, ctype),
+            get_size_directive(ctype), offset);
     return dst;
 }
 
-static void emit_store(int src, int offset, Ctype* ctype)
+static void emit_store(int src, int offset, Ctype *ctype)
 {
-    fprintf(obj_f, "    mov %s [rbp - %d], %s\n", get_size_directive(ctype), offset, get_int_reg(src, ctype));
+    fprintf(obj_f, "    mov %s [rbp - %d], %s\n", get_size_directive(ctype),
+            offset, get_int_reg(src, ctype));
 }
 
-static int emit_int(int val, Ctype* ctype)
+static int emit_int(int val, Ctype *ctype)
 {
-	int dst = allocate_register();
+    int dst = allocate_register();
     fprintf(obj_f, "    mov %s, %d\n", get_int_reg(dst, ctype), val);
     return dst;
 }
@@ -222,32 +226,36 @@ static int emit_int(int val, Ctype* ctype)
 static int emit_string(int slabel)
 {
     int dst = allocate_register();
-    fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n", get_int_reg(dst, ctype_string), slabel);
+    fprintf(obj_f, "    lea %s, [rel _L.str.%d]\n",
+            get_int_reg(dst, ctype_string), slabel);
     return dst;
 }
 
-static int emit_add(int dst, int src, Ctype* ctype)
+static int emit_add(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    add %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    add %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_sub(int dst, int src, Ctype* ctype)
+static int emit_sub(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    sub %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    sub %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_mul(int dst, int src, Ctype* ctype)
+static int emit_mul(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    imul %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    imul %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_div(int dividend, int divisor, Ctype* ctype)
+static int emit_div(int dividend, int divisor, Ctype *ctype)
 {
     if (ctype == ctype_long) {
         fprintf(obj_f, "    mov rax, %s\n", get_int_reg(dividend, ctype));
@@ -266,7 +274,7 @@ static int emit_div(int dividend, int divisor, Ctype* ctype)
     return dividend;
 }
 
-static int emit_mod(int dividend, int divisor, Ctype* ctype)
+static int emit_mod(int dividend, int divisor, Ctype *ctype)
 {
     if (ctype == ctype_long) {
         fprintf(obj_f, "    mov rax, %s\n", get_int_reg(dividend, ctype));
@@ -285,88 +293,103 @@ static int emit_mod(int dividend, int divisor, Ctype* ctype)
     return dividend;
 }
 
-static int emit_neg(int dst, Ctype* ctype)
+static int emit_neg(int dst, Ctype *ctype)
 {
     fprintf(obj_f, "    neg %s\n", get_int_reg(dst, ctype));
     return dst;
 }
 
-static int emit_lt(int dst, int src, Ctype* ctype)
+static int emit_lt(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    setl %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_gt(int dst, int src, Ctype* ctype)
+static int emit_gt(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    setg %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_le(int dst, int src, Ctype* ctype)
+static int emit_le(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    setle %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_ge(int dst, int src, Ctype* ctype)
+static int emit_ge(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    setge %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_eq(int dst, int src, Ctype* ctype)
+static int emit_eq(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    sete %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_ne(int dst, int src, Ctype* ctype)
+static int emit_ne(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    cmp %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     fprintf(obj_f, "    setne %s\n", get_int_reg(dst, ctype_char));
-    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int), get_int_reg(dst, ctype_char));
+    fprintf(obj_f, "    movzx %s, %s\n", get_int_reg(dst, ctype_int),
+            get_int_reg(dst, ctype_char));
     free_register();
     return dst;
 }
 
-static int emit_and(int dst, int src, Ctype* ctype)
+static int emit_and(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    and %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    and %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_or(int dst, int src, Ctype* ctype)
+static int emit_or(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    or %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    or %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_xor(int dst, int src, Ctype* ctype)
+static int emit_xor(int dst, int src, Ctype *ctype)
 {
-    fprintf(obj_f, "    xor %s, %s\n", get_int_reg(dst, ctype), get_int_reg(src, ctype));
+    fprintf(obj_f, "    xor %s, %s\n", get_int_reg(dst, ctype),
+            get_int_reg(src, ctype));
     free_register();
     return dst;
 }
 
-static int emit_logical_and(List* list)
+static int emit_logical_and(List *list)
 {
     int reg = allocate_register();
     int end_label = make_label();
@@ -376,7 +399,7 @@ static int emit_logical_and(List* list)
     fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
 
     for (int i = 0; i < list_len(list); i++) {
-        ast_node *node = (ast_node *)iter_next(&iter);
+        ast_node *node = (ast_node *) iter_next(&iter);
         int r = emit_code(node);
         const char *s = get_int_reg(r, node->ctype);
         fprintf(obj_f, "    test %s, %s\n", s, s);
@@ -388,7 +411,7 @@ static int emit_logical_and(List* list)
     return reg;
 }
 
-static int emit_logical_or(List* list)
+static int emit_logical_or(List *list)
 {
     int reg = allocate_register();
     int end_label = make_label();
@@ -398,7 +421,7 @@ static int emit_logical_or(List* list)
     fprintf(obj_f, "    xor %s, %s\n", reg_name, reg_name);
 
     for (int i = 0; i < list_len(list); i++) {
-        ast_node *node = (ast_node *)iter_next(&iter);
+        ast_node *node = (ast_node *) iter_next(&iter);
         int r = emit_code(node);
         const char *s = get_int_reg(r, node->ctype);
         fprintf(obj_f, "    test %s, %s\n", s, s);
@@ -411,7 +434,7 @@ static int emit_logical_or(List* list)
     return reg;
 }
 
-static void emit_if_stmt(ast_node* root)
+static void emit_if_stmt(ast_node *root)
 {
     int reg = emit_code(root->cond);
     int end_label = make_label();
@@ -433,7 +456,7 @@ static void emit_if_stmt(ast_node* root)
     }
 }
 
-static void emit_while_stmt(ast_node* root)
+static void emit_while_stmt(ast_node *root)
 {
     int begin_label = make_label();
     int end_label = make_label();
@@ -448,7 +471,7 @@ static void emit_while_stmt(ast_node* root)
     emit_label(end_label);
 }
 
-static void emit_print(int reg, Ctype* ctype, bool lf)
+static void emit_print(int reg, Ctype *ctype, bool lf)
 {
     push(0);
     push(1);
@@ -464,10 +487,12 @@ static void emit_print(int reg, Ctype* ctype, bool lf)
         fprintf(obj_f, "    movsx %s, %s\n", REG64[0], get_int_reg(reg, ctype));
         fprintf(obj_f, "    lea rdi, [rel _fmtpc]\n");
     } else if (ctype == ctype_int) {
-        fprintf(obj_f, "    movsxd %s, %s\n", REG64[0], get_int_reg(reg, ctype));
+        fprintf(obj_f, "    movsxd %s, %s\n", REG64[0],
+                get_int_reg(reg, ctype));
         fprintf(obj_f, "    lea rdi, [rel _fmtd]\n");
     } else {
-        fprintf(obj_f, "    mov %s, %s\n", REG64[1], get_int_reg(reg, ctype_string));
+        fprintf(obj_f, "    mov %s, %s\n", REG64[1],
+                get_int_reg(reg, ctype_string));
     }
     fprintf(obj_f, "    xor rax, rax\n");
     fprintf(obj_f, "    call _printf\n");
@@ -485,7 +510,7 @@ static void emit_print(int reg, Ctype* ctype, bool lf)
     free_register();
 }
 
-static void emit_read(Ctype* ctype, int offset)
+static void emit_read(Ctype *ctype, int offset)
 {
     push(0);
     push(1);
@@ -517,7 +542,8 @@ static void emit_read(Ctype* ctype, int offset)
 static void emit_reseved(int offset, int reserved_label)
 {
     int dst = allocate_register();
-    fprintf(obj_f, "    lea %s, [rel _L.res.%d]\n", get_int_reg(dst, ctype_string), reserved_label);
+    fprintf(obj_f, "    lea %s, [rel _L.res.%d]\n",
+            get_int_reg(dst, ctype_string), reserved_label);
     emit_store(dst, offset, ctype_string);
     free_register();
 }
@@ -525,24 +551,24 @@ static void emit_reseved(int offset, int reserved_label)
 
 static int emit_code(ast_node *root)
 {
-	if (!root) {
+    if (!root) {
         return -1;
     }
     int reg;
     symbol *s = NULL;
 
-	switch (root->type) {
-	case AST_LITERAL:
-		return emit_int(root->ival, root->ctype);
+    switch (root->type) {
+    case AST_LITERAL:
+        return emit_int(root->ival, root->ctype);
     case AST_STRING:
         return emit_string(root->slabel);
-	case AST_ID:
+    case AST_ID:
         s = st_lookup(root->varname);
         if (s == NULL) {
             fprintf(stderr, "codegen: unknown variable %s", root->varname);
             exit(1);
         }
-		return emit_load(s->offset, s->ctype);
+        return emit_load(s->offset, s->ctype);
     case AST_UNARY_MIUNS:
         reg = emit_code(root->operand);
         return emit_neg(reg, root->ctype);
@@ -563,7 +589,8 @@ static int emit_code(ast_node *root)
         reg = emit_code(root->declinit);
         s = st_lookup(root->declvar->varname);
         if (s == NULL) {
-            fprintf(stderr, "codegen: unknown variable %s", root->declvar->varname);
+            fprintf(stderr, "codegen: unknown variable %s",
+                    root->declvar->varname);
             exit(1);
         }
         eval_data_size(reg, root->ctype, root->declinit->ctype);
@@ -574,7 +601,8 @@ static int emit_code(ast_node *root)
         reg = emit_code(root->left);
         s = st_lookup(root->right->varname);
         if (s == NULL) {
-            fprintf(stderr, "codegen: unknown variable %s", root->right->varname);
+            fprintf(stderr, "codegen: unknown variable %s",
+                    root->right->varname);
             exit(1);
         }
         eval_data_size(reg, root->ctype, root->left->ctype);
@@ -612,11 +640,11 @@ static int emit_code(ast_node *root)
         s = st_lookup(root->varname);
         emit_read(s->ctype, s->offset);
         return -1;
-	default:
-		break;
-	}
+    default:
+        break;
+    }
 
-	int dst = emit_code(root->left);
+    int dst = emit_code(root->left);
     int src = emit_code(root->right);
 
     eval_data_size(dst, root->left->ctype, root->right->ctype);
@@ -657,13 +685,13 @@ static int emit_code(ast_node *root)
     }
 }
 
-void codegen(ast_node* root)
+void codegen(ast_node *root)
 {
-	emit_title();
+    emit_title();
     emit_data();
     emit_bss();
-	stack_pos = 0;
-	emit_prolouge(root);
-	emit_code(root->body);
-	emit_epilouge();
+    stack_pos = 0;
+    emit_prolouge(root);
+    emit_code(root->body);
+    emit_epilouge();
 }

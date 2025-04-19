@@ -107,7 +107,7 @@ typedef struct __ast_node {
             struct __ast_node *whilecond;
             struct __ast_node *whilebody;
         };
-        
+
         struct {
             bool lf;
             struct __ast_node *assign_expr;
@@ -129,40 +129,40 @@ extern List *reserved;
 extern char *ctype_to_str[];
 
 extern void ast_initialize(void);
-extern ast_node *func(char* fname, ast_node* body);
-extern ast_node *block_item_list(ast_node* left, ast_node* right);
-extern ast_node *decl(ast_node* init_list);
-extern ast_node *init_declarator_list(ast_node* left, ast_node* right);
-extern ast_node *init_declarator(ast_node* left, ast_node* right);
-extern ast_node *direct_declarator(char* varname);
-extern ast_node *if_stmt(ast_node* cond, ast_node* then, ast_node* els);
-extern ast_node *while_stmt(ast_node* cond, ast_node* body);
-extern ast_node *input(char* varname);
-extern ast_node *output(bool lf, ast_node* assign_stmt);
-extern ast_node *expr(ast_node* left, ast_node* right);
-extern ast_node *assign(ast_node* left, ast_node* right);
-extern ast_node *logical_or(ast_node* op1, ast_node* op2);
-extern ast_node *logical_and(ast_node* op1, ast_node* op2);
-extern ast_node *bitwise_or(ast_node* op1, ast_node* op2);
-extern ast_node *bitwise_xor(ast_node* op1, ast_node* op2);
-extern ast_node *bitwise_and(ast_node* op1, ast_node* op2);
-extern ast_node *equality(ast_node* op1, ast_node* op2);
-extern ast_node *not_equality(ast_node* op1, ast_node* op2);
-extern ast_node *less_than(ast_node* op1, ast_node* op2);
-extern ast_node *greater_than(ast_node* op1, ast_node* op2);
-extern ast_node *less_than_or_equal(ast_node* op1, ast_node* op2);
-extern ast_node *greater_than_or_equal(ast_node* op1, ast_node* op2);
-extern ast_node *add(ast_node* op1, ast_node* op2);
-extern ast_node *sub(ast_node* op1, ast_node* op2);
-extern ast_node *mul(ast_node* op1, ast_node* op2);
-extern ast_node *ast_div(ast_node* op1, ast_node* op2);
-extern ast_node *mod(ast_node* op1, ast_node* op2);
-extern ast_node *cast_expr(ast_node* operand);
-extern ast_node *unary_op(int type, ast_node* operand);
-extern ast_node *id(Ctype* ctype, char* name);
-extern ast_node *integer_literal(Ctype* ctype, int val);
-extern ast_node *string(char* str);
+extern ast_node *func(char *fname, ast_node *body);
+extern ast_node *block_item_list(ast_node *left, ast_node *right);
+extern ast_node *decl(ast_node *init_list);
+extern ast_node *init_declarator_list(ast_node *left, ast_node *right);
+extern ast_node *init_declarator(ast_node *left, ast_node *right);
+extern ast_node *direct_declarator(char *varname);
+extern ast_node *if_stmt(ast_node *cond, ast_node *then, ast_node *els);
+extern ast_node *while_stmt(ast_node *cond, ast_node *body);
+extern ast_node *input(char *varname);
+extern ast_node *output(bool lf, ast_node *assign_stmt);
+extern ast_node *expr(ast_node *left, ast_node *right);
+extern ast_node *assign(ast_node *left, ast_node *right);
+extern ast_node *logical_or(ast_node *op1, ast_node *op2);
+extern ast_node *logical_and(ast_node *op1, ast_node *op2);
+extern ast_node *bitwise_or(ast_node *op1, ast_node *op2);
+extern ast_node *bitwise_xor(ast_node *op1, ast_node *op2);
+extern ast_node *bitwise_and(ast_node *op1, ast_node *op2);
+extern ast_node *equality(ast_node *op1, ast_node *op2);
+extern ast_node *not_equality(ast_node *op1, ast_node *op2);
+extern ast_node *less_than(ast_node *op1, ast_node *op2);
+extern ast_node *greater_than(ast_node *op1, ast_node *op2);
+extern ast_node *less_than_or_equal(ast_node *op1, ast_node *op2);
+extern ast_node *greater_than_or_equal(ast_node *op1, ast_node *op2);
+extern ast_node *add(ast_node *op1, ast_node *op2);
+extern ast_node *sub(ast_node *op1, ast_node *op2);
+extern ast_node *mul(ast_node *op1, ast_node *op2);
+extern ast_node *ast_div(ast_node *op1, ast_node *op2);
+extern ast_node *mod(ast_node *op1, ast_node *op2);
+extern ast_node *cast_expr(ast_node *operand);
+extern ast_node *unary_op(int type, ast_node *operand);
+extern ast_node *id(Ctype *ctype, char *name);
+extern ast_node *integer_literal(Ctype *ctype, int val);
+extern ast_node *string(char *str);
 
-void print_ast(ast_node* root, int indent);
+void print_ast(ast_node *root, int indent);
 
 #endif
