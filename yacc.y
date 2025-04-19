@@ -104,22 +104,22 @@ init_declarator: declarator                                        { $$ = $1; }
 declarator: direct_declarator                                      { $$ = $1; }
           ;
 
-direct_declarator: ID           {
-                                    if (st_lookup($1)) {
-                                        yyerror(root, "parser: redefinition of %s\n", $1);
-						            } else {
-							            st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
-							            $$ = direct_declarator($1);
-						            }
-					            }
-                 | '(' ID ')'   {
-                                    if (st_lookup($2)) {
-                                        yyerror(root, "parser: redefinition of %s\n", $2);
-                                    } else {
-										st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
-										$$ = direct_declarator($2);
-                                    }
-                                }
+direct_declarator: ID                       {
+                                                if (st_lookup($1)) {
+                                                    yyerror(root, "parser: redefinition of %s\n", $1);
+                                                } else {
+                                                    st_insert($1, curr_ctype, !is_const, @1.first_line, @1.first_column);
+                                                    $$ = direct_declarator($1);
+                                                }
+                                            }
+                 | '(' ID ')'               {
+                                                if (st_lookup($2)) {
+                                                    yyerror(root, "parser: redefinition of %s\n", $2);
+                                                } else {
+                                                    st_insert($2, curr_ctype, !is_const, @2.first_line, @2.first_column);
+                                                    $$ = direct_declarator($2);
+                                                }
+                                            }
                  ;
 
 initializer: assignment_expression                                 { $$ = $1; }
