@@ -30,25 +30,6 @@ symbol *st_lookup(char *name)
     return s;
 }
 
-void st_update(char *name, Ctype *ctype)
-{
-    symbol *s = st_lookup(name);
-    if (s) {
-        s->ctype = ctype;
-    }
-}
-
-/* Procedure printSymTab prints a formatted
- * listing of the symbol table contents
- * to the listing file
- */
-
-void generate_internal_name() {}
-
-void which_type() {}
-
-void which_value() {}
-
 void print_symbol_table(symbol *symtab)
 {
     for (symbol *cur = symtab; cur; cur = cur->hh.next) {

@@ -69,7 +69,6 @@ ast_node *init_declarator(ast_node *declinit, ast_node *daclvar)
     node->declinit = declinit;
     if (daclvar->ctype == NULL) {
         daclvar->ctype = declinit->ctype;
-        // st_update(daclvar->varname, daclvar->ctype);
         symbol *s = st_lookup(daclvar->varname);
         s->ctype = daclvar->ctype;
     }
@@ -390,8 +389,7 @@ void print_ast(ast_node *root, int indent)
         if (root->ctype == NULL) {
             printf("AST_INIT_DECL: ctype is NULL\n");
         } else {
-            printf("AST_INIT_DECL: %s<%d>\n", ctype_to_str[root->ctype->type],
-                   root->ctype->size);
+            printf("AST_INIT_DECL: %s<%d>\n", ctype_to_str[root->ctype->type], root->ctype->size);
         }
         print_ast(root->declinit, indent + 4);
         print_ast(root->declvar, indent + 4);
@@ -399,8 +397,8 @@ void print_ast(ast_node *root, int indent)
         if (root->ctype == NULL) {
             printf("AST_INIT_DECL_LIST: ctype is NULL\n");
         } else {
-            printf("AST_INIT_DECL_LIST: %s<%d>\n",
-                   ctype_to_str[root->ctype->type], root->ctype->size);
+            printf("AST_INIT_DECL_LIST: %s<%d>\n", ctype_to_str[root->ctype->type],
+                   root->ctype->size);
         }
         print_ast(root->left, indent + 4);
         print_ast(root->right, indent + 4);
@@ -408,11 +406,10 @@ void print_ast(ast_node *root, int indent)
         if (root->ctype == NULL) {
             printf("AST_DIRECT_DECL: %s: ctype is NULL\n", root->varname);
         } else {
-            printf("AST_DIRECT_DECL: %s: %s<%d> ", root->varname,
-                   ctype_to_str[root->ctype->type], root->ctype->size);
+            printf("AST_DIRECT_DECL: %s: %s<%d> ", root->varname, ctype_to_str[root->ctype->type],
+                   root->ctype->size);
             symbol *s = st_lookup(root->varname);
-            printf("Symbol: %s: %s\n", s->name,
-                   s->ctype ? ctype_to_str[s->ctype->type] : "NULL");
+            printf("Symbol: %s: %s\n", s->name, s->ctype ? ctype_to_str[s->ctype->type] : "NULL");
         }
     } else if (root->type == AST_IF) {
         printf("AST_IF\n");
@@ -452,10 +449,10 @@ void print_ast(ast_node *root, int indent)
         printf("AST_STRING: %s\n", root->sval);
     } else if (root->type == AST_ID) {
         symbol *s = st_lookup(root->varname);
-        printf("AST_ID: %s: %s<%d>", root->varname,
-               ctype_to_str[root->ctype->type], root->ctype->size);
-        printf("Symbol: %s: %s<%d> %s\n", s->name, ctype_to_str[s->ctype->type],
-               s->ctype->size, s->mutable ? "mutable" : "immutable");
+        printf("AST_ID: %s: %s<%d>", root->varname, ctype_to_str[root->ctype->type],
+               root->ctype->size);
+        printf("Symbol: %s: %s<%d> %s\n", s->name, ctype_to_str[s->ctype->type], s->ctype->size,
+               s->mutable ? "mutable" : "immutable");
     } else if (root->type == AST_UNARY_MIUNS) {
         printf("AST_UNARY_MIUNS\n");
         print_ast(root->operand, indent + 4);
@@ -472,10 +469,8 @@ void print_ast(ast_node *root, int indent)
             print_ast((ast_node *) iter_next(&iter), indent + 4);
         }
     } else if (root->type == AST_CAST_EXPR) {
-        printf("AST_CAST_EXPR: cast %s<%d> to %s<%d>\n",
-               ctype_to_str[root->operand->ctype->type],
-               root->operand->ctype->size, ctype_to_str[root->ctype->type],
-               root->ctype->size);
+        printf("AST_CAST_EXPR: cast %s<%d> to %s<%d>\n", ctype_to_str[root->operand->ctype->type],
+               root->operand->ctype->size, ctype_to_str[root->ctype->type], root->ctype->size);
         print_ast(root->operand, indent + 4);
     } else {
         switch (root->type) {
