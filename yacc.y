@@ -27,9 +27,9 @@
 %type <ast> block_item_list block_item
 %type <ast> declaration init_declarator_list init_declarator
 %type <ast> declarator direct_declarator initializer
-%type <ast>	statement compound_statement expression_statement
+%type <ast> statement compound_statement expression_statement
 %type <ast> selection_statement iteration_statement io_statement
-%type <ast>	expression assignment_expression conditional_expression
+%type <ast> expression assignment_expression conditional_expression
 %type <ast> logical_or_expression logical_and_expression
 %type <ast> inclusive_or_expression exclusive_or_expression and_expression
 %type <ast> equality_expression relational_expression
