@@ -20,3 +20,4 @@ AlignEscapedNewlines: Left
 AttributeMacros:
   - FORCE_INLINE
   - ALIGN_STRUCT
+ColumnLimit: 100
