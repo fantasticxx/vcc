@@ -1,6 +1,6 @@
 # Vanilla C Compiler
 
-Vanilla C Compiler is a practice for compiler construction.
+Vanilla C Compiler is a practice for compiler construction.  
 It supports a C-like language and generates x86_64 [NASM](https://github.com/netwide-assembler/nasm) assembly code for **macOS**.
 
 ## Features
@@ -31,7 +31,7 @@ $ make test
 $ ./vcc <input-file>.vc
 ```
 
-You will get the generated x86_64 assembly output file: `a.asm`
+You will get the generated x86_64 assembly output file: `a.asm`  
 The output can be assembled and linked into a valid executable: `a.out`
 ```shell
 $ nasm -fmacho64 a.asm
