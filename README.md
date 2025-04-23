@@ -1,15 +1,17 @@
 # Vanilla C Compiler
 
 Vanilla C Compiler is a practice for compiler construction.  
-It supports a Vanilla-C language and generates x86_64 [NASM](https://github.com/netwide-assembler/nasm) assembly code for **macOS**.
+It supports a Vanilla-C language and generates x86_64 [NASM](https://github.com/netwide-assembler/nasm) assembly code for **macOS**.  
+Vanilla-C is a plain, simple language which is C subset with restriction and limited features.
 
 ## Features
 
 - Basic C syntax support
 - x86_64 assembly output (Mach-O format)
+- Simple main program structure and no subprograms (function or procedure)
 - Basic data types: `int`, `char`, `bool`, `string`
 - Control flow: `if`, `while`
-- Basic I/O operations
+- Basic I/O operations `read()`, `print()`, `println()`
 - Logical and bitwise operations
 
 ## Build
